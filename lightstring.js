@@ -1,13 +1,30 @@
 'use strict';
 
+/**
+  Copyright (c) 2011, Sonny Piers <sonny at fastmail dot net>
+
+  Permission to use, copy, modify, and/or distribute this software for any
+  purpose with or without fee is hereby granted, provided that the above
+  copyright notice and this permission notice appear in all copies.
+
+  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+
 var Lightstring = {
 	NS: {},
 	stanza: {},
 };
 
-Lightstring.Connection = function (aURL) {
+Lightstring.Connection = function (aService) {
   var parser = new DOMParser();
   var serializer = new XMLSerializer();
+  this.service = aService;
   this.handlers = {};
   this.iqid = 1024;
   this.getNewId = function() {
@@ -20,27 +37,48 @@ Lightstring.Connection = function (aURL) {
   this.serialize = function(elm) {
     return serializer.serializeToString(elm);
   };
-  this.connect = function(jid, password) {
-    this.domain = jid.split('@')[1];
-    this.node = jid.split('@')[0];
-    this.jid = jid;
-    this.password = password;
-    if(typeof WebSocket === 'undefined')
-      this.socket = new MozWebSocket(aURL);
+  this.connect = function(aJid, aPassword) {
+    if(aJid)
+      this.jid = aJid;
+    if(this.jid) {
+      this.domain = this.jid.split('@')[1];
+      this.node = this.jid.split('@')[0];
+      this.resource = this.jid.split('/')[1];
+    }
+    if(aPassword)
+      this.password = aPassword;
+
+    if(!this.jid)
+      throw "Lightstring: Connection.jid is undefined.";
+    if(!this.password)
+      throw "Lightstring: Connection.password is undefined.";
+    if(!this.service)
+      throw "Lightstring: Connection.service is undefined.";
+
+    //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635   
+    if(MozWebSocket)
+      this.socket = new MozWebSocket(this.service);
+    else if(WebSocket)
+      this.socket = new WebSocket(this.service);
     else
-      this.socket = new WebSocket(aURL);
+      this.emit('error', 'No WebSocket support.');
 
     var that = this;
     this.socket.addEventListener('open', function() {
-      that.emit('open');
-      that.send("<stream:stream to='"+that.domain+"' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' />");
+      that.emit('connecting');
+      //FIXME there shouldn't be an ending "/"
+      that.send(
+        "<stream:stream to='"+that.domain+"'\
+                        xmlns='jabber:client'\
+                        xmlns:stream='http://etherx.jabber.org/streams'\
+                        version='1.0'/>"
+      );
     });
-    this.socket.addEventListener('error', function(err) {
-      that.emit('error');
+    this.socket.addEventListener('error', function(e) {
+      that.emit('error', e.data);
     });
-    this.socket.addEventListener('close', function(close) {
-			that.emit('close');
-			that.emit('disconnected');
+    this.socket.addEventListener('close', function(e) {
+			that.emit('disconnected', e.data);
     });
     this.socket.addEventListener('message', function(e) {
       that.emit('XMLInput', e.data);
@@ -48,29 +86,21 @@ Lightstring.Connection = function (aURL) {
       that.emit('DOMInput', elm);
       that.emit(elm.tagName, elm);
 
-			if((elm.tagName === 'iq'))
+			if(elm.tagName === 'iq')
 				that.emit(elm.getAttribute('id'), elm);
     });
   };
-  
-
-  
-  this.send = function(stanza, callback) {
-    //FIXME support for E4X
-    //~ if(typeof stanza === 'xml') {
-      //~ stanza = stanza.toXMLString();
-    //~ }
-    if(stanza.cnode) {
-			stanza = stanza.toString();
-			//~ console.log(typeof stanza);
-		}
-    if(typeof stanza === 'string') {
-      var str = stanza;
-      var elm = this.parse(stanza);
+  this.send = function(aStanza, aCallback) {
+    if(typeof aStanza === 'string') {
+      var str = aStanza;
+      var elm = this.parse(str);
+    }
+    else if(aStanza instanceof Element) {
+      var elm = aStanza;
+      var str = this.serialize(elm);
     }
     else {
-      var elm = stanza;
-      var str = this.serialize(stanza);
+      that.emit('error', 'Unsupported data type.');
     }
     
     
@@ -80,7 +110,11 @@ Lightstring.Connection = function (aURL) {
         elm.setAttribute('id', this.getNewId())
         str = this.serialize(elm)
       }
-      if(callback) this.on(elm.getAttribute('id'), callback);
+      if(aCallback)
+        this.on(elm.getAttribute('id'), aCallback);
+    }
+    else if(aCallback) {
+      that.emit('warning', 'Callback can\'t be called with non-iq stanza.');
     }
     
     
@@ -89,11 +123,11 @@ Lightstring.Connection = function (aURL) {
     this.emit('DOMOutput', elm);
   };
   this.disconnect = function() {
+		this.emit('disconnecting');
 		this.send('</stream:stream>');
-		this.emit('disconnected');
 		this.socket.close();
+    this.emit('disconnected');
 	};
-  //FIXME Callbacks sucks, better idea?
   this.emit = function(name, data) {
     var handlers = this.handlers[name];
     if(!handlers)
@@ -130,27 +164,53 @@ Lightstring.Connection = function (aURL) {
       
       //FIXME support SCRAM-SHA1 && allow specify method preferences  
       if('DIGEST-MD5' in mechanisms)
-        that.send("<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='DIGEST-MD5'/>");
+        that.send(
+          "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'\
+                 mechanism='DIGEST-MD5'/>"
+        );
       else if('PLAIN' in mechanisms) {
-        var token = btoa(that.jid + "\u0000" + that.jid.split('@')[0] + "\u0000" + that.password);
-        that.send("<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='PLAIN'>"+token+"</auth>");
+        var token = btoa(
+          that.jid +
+          "\u0000" +
+          that.jid.node +
+          "\u0000" + 
+          that.password
+        );
+        that.send(
+          "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'\
+                 mechanism='PLAIN'>"+token+"</auth>"
+        );
       }
     }
     //XMPP features
     else {
       that.emit('features', stanza);
       //Bind http://xmpp.org/rfcs/rfc3920.html#bind
-      that.send("<iq type='set' xmlns='jabber:client'><bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/></iq>", function() {
+      that.send(
+        "<iq type='set' xmlns='jabber:client'>\
+          <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>\
+         </iq>",
+        function() {
         //Session http://xmpp.org/rfcs/rfc3921.html#session
-        that.send("<iq type='set' xmlns='jabber:client'><session xmlns='urn:ietf:params:xml:ns:xmpp-session'/></iq>", function() {
-          that.emit('connected');
-        });
+        that.send(
+          "<iq type='set' xmlns='jabber:client'>\
+            <session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>\
+          </iq>",
+          function() {
+            that.emit('connected');
+          }
+        );
       });
     }
   });
   //Internal
   this.on('success', function(stanza, that) {
-    that.send("<stream:stream to='"+that.domain+"' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0' />");
+    that.send(
+      "<stream:stream to='"+that.domain+"'\
+                      xmlns='jabber:client'\
+                      xmlns:stream='http://etherx.jabber.org/streams'\
+                      version='1.0' />"
+    );
   });
   //Internal
   this.on('challenge', function(stanza, that) {
@@ -195,7 +255,6 @@ Lightstring.Connection = function (aURL) {
     if (host !== null) {
         digest_uri = digest_uri + "/" + host;
     }
-
     var A1 = MD5.hash(that.node +
                       ":" + realm + ":" + that.password) +
         ":" + nonce + ":" + cnonce;
@@ -215,7 +274,9 @@ Lightstring.Connection = function (aURL) {
                       cnonce + ":auth:" +
                       MD5.hexdigest(A2))) + ',';
     responseText += 'charset="utf-8"';
-
-    that.send("<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"+btoa(responseText)+"</response>");
+    that.send(
+      "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
+        +btoa(responseText)+
+      "</response>");
   });
 };

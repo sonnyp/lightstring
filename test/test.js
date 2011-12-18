@@ -1,0 +1,5 @@
+/**
+ * lightstring tests
+ */
+
+//FIXME TODO
