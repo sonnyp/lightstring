@@ -38,6 +38,7 @@ Lightstring.Connection = function (aService) {
     return serializer.serializeToString(elm);
   };
   this.connect = function(aJid, aPassword) {
+    this.emit('connecting');
     if(aJid)
       this.jid = aJid;
     if(this.jid) {
@@ -55,24 +56,23 @@ Lightstring.Connection = function (aService) {
     if(!this.service)
       throw "Lightstring: Connection.service is undefined.";
 
-    //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635   
-    if(MozWebSocket)
-      this.socket = new MozWebSocket(this.service);
-    else if(WebSocket)
+    //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635
+    try {
       this.socket = new WebSocket(this.service);
-    else
-      this.emit('error', 'No WebSocket support.');
+    }
+    catch(error) {
+      this.socket = new MozWebSocket(this.service);
+    }
 
     var that = this;
     this.socket.addEventListener('open', function() {
-      that.emit('connecting');
-      //FIXME there shouldn't be an ending "/"
-      that.send(
+      var stream =
         "<stream:stream to='"+that.domain+"'\
                         xmlns='jabber:client'\
                         xmlns:stream='http://etherx.jabber.org/streams'\
-                        version='1.0'/>"
-      );
+                        version='1.0'/>";
+      that.socket.send(stream)
+      that.emit('XMLOutput', stream);
     });
     this.socket.addEventListener('error', function(e) {
       that.emit('error', e.data);
@@ -126,7 +126,6 @@ Lightstring.Connection = function (aService) {
 		this.emit('disconnecting');
 		this.send('</stream:stream>');
 		this.socket.close();
-    this.emit('disconnected');
 	};
   this.emit = function(name, data) {
     var handlers = this.handlers[name];
@@ -211,6 +210,10 @@ Lightstring.Connection = function (aService) {
                       xmlns:stream='http://etherx.jabber.org/streams'\
                       version='1.0' />"
     );
+  });
+  //Internal
+  this.on('failure', function(stanza, that) {
+    that.emit('conn-error', stanza.firstChild.tagName);
   });
   //Internal
   this.on('challenge', function(stanza, that) {

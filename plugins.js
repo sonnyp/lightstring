@@ -16,11 +16,17 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+NodeList.prototype.forEach = function(aCallback) {
+	for(var i = 0; i<this.length; i++)
+		aCallback(this[i]);
+}
+
+
 //
 //Roster
 //
-Lighstring.NS.roster = 'jabber:iq:roster';
-Lighstring.stanza.roster = {
+Lightstring.NS.roster = 'jabber:iq:roster';
+Lightstring.stanza.roster = {
 	'get': function() {
 		return "<iq type='get'><query xmlns='"+Lightstring.NS.roster+"'/></iq>";
 	},
@@ -37,7 +43,7 @@ Lighstring.stanza.roster = {
 		return $iq({type: 'set'}).c('query', {xmlns: Lightstring.NS.roster}).c('item', {jid: aAddress, subscription: 'remove'}).tree();
 	}
 };
-Lighstring.getRoster = function(connection, aCallback) {
+Lightstring.getRoster = function(connection, aCallback) {
 	connection.send(this.stanza.roster.get(), function(answer){
 		var contacts = [];
 		answer.querySelectorAll('item').forEach(function(item) {
@@ -67,8 +73,8 @@ Lighstring.getRoster = function(connection, aCallback) {
 //
 //vCard
 //
-Lighstring.NS.vcard = 'vcard-temp';
-Lighstring.stanza.vcard = {
+Lightstring.NS.vcard = 'vcard-temp';
+Lightstring.stanza.vcard = {
 	'get': function(aTo) {
 		if(aTo)
 			return "<iq type='get' to='"+aTo+"'><vCard xmlns='"+Lightstring.NS.vcard+"'/></iq>";
@@ -77,7 +83,7 @@ Lighstring.stanza.vcard = {
 	}
 };
 //FIXME we should return a proper vcard, not an XMPP one
-Lighstring.getVcard = function(aConnection, aTo, aCallback) {
+Lightstring.getVcard = function(aConnection, aTo, aCallback) {
 	aConnection.send(Lightstring.stanza.vcard.get(aTo), function(answer, err){
 		if(answer) {
 			var vcard = answer.querySelector('vCard');
@@ -91,9 +97,9 @@ Lighstring.getVcard = function(aConnection, aTo, aCallback) {
 //
 //Disco
 //
-Lighstring.NS['disco#info'] = "http://jabber.org/protocol/disco#info";
-Lighstring.NS['disco#items'] = "http://jabber.org/protocol/disco#items";
-Lighstring.stanza.disco = {
+Lightstring.NS['disco#info'] = "http://jabber.org/protocol/disco#info";
+Lightstring.NS['disco#items'] = "http://jabber.org/protocol/disco#items";
+Lightstring.stanza.disco = {
 	items: function(aTo, aNode) {
 		if(aTo)
 			var iq = "<iq type='get' to='"+aTo+"'>";
@@ -120,7 +126,7 @@ Lighstring.stanza.disco = {
 		return iq+query+"</iq>";
 	}
 };
-Lighstring.discoItems = function(aConnection, aTo, aCallback) {
+Lightstring.discoItems = function(aConnection, aTo, aCallback) {
 	aConnection.send(Lightstring.stanza.disco.items(aTo), function(answer){
 		var items = [];
 		answer.querySelectorAll('item').forEach(function(node) {
@@ -135,7 +141,7 @@ Lighstring.discoItems = function(aConnection, aTo, aCallback) {
 			aCallback(items);
 	});
 };
-Lighstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
+Lightstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
 	aConnection.send(Lightstring.stanza.disco.info(aTo, aNode), function(answer){
 		var field = answer.querySelector('field[var="pubsub#creator"] > value');
 		var creator = field ? field.textContent : '';
@@ -146,10 +152,10 @@ Lighstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
 //
 //PubSub
 //
-Lighstring.NS.x = "jabber:x:data";
-Lighstring.NS.pubsub = "http://jabber.org/protocol/pubsub";
-Lighstring.NS.pubsub_owner = "http://jabber.org/protocol/pubsub#owner";
-Lighstring.stanza.pubsub = {
+Lightstring.NS.x = "jabber:x:data";
+Lightstring.NS.pubsub = "http://jabber.org/protocol/pubsub";
+Lightstring.NS.pubsub_owner = "http://jabber.org/protocol/pubsub#owner";
+Lightstring.stanza.pubsub = {
 	getConfig: function(aTo, aNode) {
 		return  "<iq type='get' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><configure node='"+aNode+"'/></pubsub></iq>";
 	},
@@ -189,7 +195,7 @@ Lighstring.stanza.pubsub = {
 		return iq;
 	},
 };
-Lighstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
+Lightstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(answer){
 		var items = [];
 		answer.querySelectorAll('item').forEach(function(node) {
@@ -199,16 +205,16 @@ Lighstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
 				src: node.querySelector('content').getAttribute('src'),
 				type: node.querySelector('content').getAttribute('type'),
 			}
-			var thumbnail = node.querySelector('link');
-			if(thumbnail)
-				item.thumbnail = thumbnail.getAttribute('href');
+			var miniature = node.querySelector('link');
+			if(miniature)
+				item.miniature = miniature.getAttribute('href');
 			items.push(item);
 		})
 		if(aCallback)
 			aCallback(items);
 	});
 }
-Lighstring.pubsubCreate = function(aConnection, aTo, aNode, aFields, aCallback) {
+Lightstring.pubsubCreate = function(aConnection, aTo, aNode, aFields, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.create(aTo, aNode, aFields), function(answer) {
 		if(answer.getAttribute('type') === 'result')
 			aCallback(null, answer);
@@ -216,7 +222,7 @@ Lighstring.pubsubCreate = function(aConnection, aTo, aNode, aFields, aCallback) 
 			aCallback(answer, null);
 	});
 };
-Lighstring.pubsubConfig = function(aConnection, aTo, aNode, aCallback) {
+Lightstring.pubsubConfig = function(aConnection, aTo, aNode, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.getConfig(aTo, aNode), function(answer){
 		var accessmodel = answer.querySelector('field[var="pubsub#access_model"]').lastChild.textContent;
 		if(accessmodel)
@@ -225,13 +231,13 @@ Lighstring.pubsubConfig = function(aConnection, aTo, aNode, aCallback) {
 			aCallback(null);
 	});
 }
-Lighstring.pubsubRetract = function(aConnection, aTo, aNode, aItem, aCallback) {
+Lightstring.pubsubRetract = function(aConnection, aTo, aNode, aItem, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), function(answer){
 		if(aCallback)
 			aCallback(answer);
 	});
 }
-Lighstring.pubsubPublish = function(aConnection, aTo, aNode, aItem, aId, aCallback) {
+Lightstring.pubsubPublish = function(aConnection, aTo, aNode, aItem, aId, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), function(answer){
 		if(answer.getAttribute('type') === 'result')
 			aCallback(null, answer);
@@ -239,13 +245,13 @@ Lighstring.pubsubPublish = function(aConnection, aTo, aNode, aItem, aId, aCallba
 			aCallback(answer, null);
 	});
 }
-Lighstring.pubsubDelete = function(aConnection, aTo, aNode, aCallback) {
+Lightstring.pubsubDelete = function(aConnection, aTo, aNode, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.delete(aTo, aNode), function(answer){
 		if(aCallback)
 			aCallback(answer);
 	});
 }
-Lighstring.pubsubGetAffiliations = function(aConnection, aTo, aNode, aCallback) {
+Lightstring.pubsubGetAffiliations = function(aConnection, aTo, aNode, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.affiliations(aTo, aNode), function(answer) {
 		if((answer.getAttribute('type') === 'result') && aCallback) {
 			var affiliations = {};
@@ -256,13 +262,13 @@ Lighstring.pubsubGetAffiliations = function(aConnection, aTo, aNode, aCallback) 
 		}
 	});
 };
-Lighstring.pubsubSetAffiliations = function(aConnection, aTo, aNode, aAffiliations, aCallback) {
+Lightstring.pubsubSetAffiliations = function(aConnection, aTo, aNode, aAffiliations, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.setAffiliations(aTo, aNode, aAffiliations));
 };
 //
 //IM
 //
-Lighstring.stanza.message = {
+Lightstring.stanza.message = {
 	normal: function(aTo, aSubject, aText) {
 		return "<message type='normal' to='"+aTo+"'><subject>"+aSubject+"</subject><body>"+aText+"</body></message>";
 	},
