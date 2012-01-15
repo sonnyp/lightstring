@@ -1,8 +1,10 @@
 Known support
   Browser:
-    See: http://caniuse.com/#search=websocket
-    For non websocket-aware browsers you can use 
-    https://github.com/gimite/web-socket-js/
+    Firefox
+    Chrome
+    Safari
+    iOS
+    ...?
   Server:
     node-xmpp-bosh
 
