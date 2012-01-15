@@ -16,27 +16,66 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+
+/**
+ * @namespace No code from lightstring should be callable outside this namespace/scope.
+ */
 var Lightstring = {
+  /**
+   * @namespace Holds XMPP namespaces.
+   *  
+   */
 	NS: {},
+  /**
+   * @namespace Holds XMPP stanza builders.
+   * 
+   */
 	stanza: {},
+  /**
+   * @private
+   */
+  parser: new DOMParser(),
+  /**
+   * @private
+   */
+  serializer: new XMLSerializer(),
+  /**
+   * @function Transforms a XML string to a DOM object.
+   * @param {String} aString XML string
+   * @returns {Object} Domified XML.
+   */
+  xml2dom: function(aString) {
+    return this.parser.parseFromString(aString, 'text/xml').documentElement;
+  },
+  /**
+   * @function Transforms a DOM object to a XML string.
+   * @param {Object} aString DOM object
+   * @returns {String} Stringified DOM.
+   */
+  dom2xml: function(aElement) {
+    return this.serializer.serializeToString(aElement);
+  },
 };
 
+/**
+ * @constructor Creates a new Lightstring connection
+ * @param {String} [aService] The Websocket service URL.
+ * @memberOf Lightstring
+ */
 Lightstring.Connection = function (aService) {
-  var parser = new DOMParser();
-  var serializer = new XMLSerializer();
-  this.service = aService;
+  if(aService) 
+    this.service = aService;
   this.handlers = {};
   this.iqid = 1024;
   this.getNewId = function() {
     this.iqid++;
     return 'sendiq:'+this.iqid;
   };
-  this.parse = function(str) {
-    return parser.parseFromString(str, 'text/xml').documentElement;
-  };
-  this.serialize = function(elm) {
-    return serializer.serializeToString(elm);
-  };
+  /**
+   * @function Create and open a websocket then go though the XMPP authentification process.
+   * @param {String} [aJid] The JID (Jabber id) to use.
+   * @param {String} [aPassword] The associated password.
+   */
   this.connect = function(aJid, aPassword) {
     this.emit('connecting');
     if(aJid)
@@ -68,17 +107,13 @@ Lightstring.Connection = function (aService) {
     this.socket.addEventListener('open', function() {
       if(this.protocol !== 'xmpp')
         throw "Lightstring: The server located at "+that.service+" is not XMPP aware.";
+      //FIXME no ending "/" - node-xmpp-bosh bug
       var stream =
         "<stream:stream to='"+that.domain+"'\
                         xmlns='jabber:client'\
                         xmlns:stream='http://etherx.jabber.org/streams'\
                         version='1.0'/>";
-      //FIXME should be this but doesn't works with node-xmpp-bosh
-      //~ var stream =
-      //~   "<stream:stream to='"+that.domain+"'\
-                        xmlns='jabber:client'\
-                        xmlns:stream='http://etherx.jabber.org/streams'\
-                        version='1.0'/>";
+      
       that.socket.send(stream)
       that.emit('XMLOutput', stream);
     });
@@ -90,7 +125,7 @@ Lightstring.Connection = function (aService) {
     });
     this.socket.addEventListener('message', function(e) {
       that.emit('XMLInput', e.data);
-      var elm = that.parse(e.data);
+      var elm = Lightstring.xml2dom(e.data);
       that.emit('DOMInput', elm);
       that.emit(elm.tagName, elm);
 
@@ -98,14 +133,19 @@ Lightstring.Connection = function (aService) {
 				that.emit(elm.getAttribute('id'), elm);
     });
   };
+  /**
+   * @function Send a message.
+   * @param {String|Object} aStanza The message to send.
+   * @param {Function} [aCallback] A callback that will be called when the answer will answer.
+   */
   this.send = function(aStanza, aCallback) {
     if(typeof aStanza === 'string') {
       var str = aStanza;
-      var elm = this.parse(str);
+      var elm = Lightstring.xml2dom(str);
     }
     else if(aStanza instanceof Element) {
       var elm = aStanza;
-      var str = this.serialize(elm);
+      var str = this.dom2xml(elm);
     }
     else {
       that.emit('error', 'Unsupported data type.');
@@ -116,7 +156,7 @@ Lightstring.Connection = function (aService) {
 			var id = elm.getAttribute('id');
       if(!id) {
         elm.setAttribute('id', this.getNewId())
-        str = this.serialize(elm)
+        str = Lightstring.dom2xml(elm)
       }
       if(aCallback)
         this.on(elm.getAttribute('id'), aCallback);
@@ -130,35 +170,47 @@ Lightstring.Connection = function (aService) {
     this.emit('XMLOutput', str);
     this.emit('DOMOutput', elm);
   };
+  /**
+   * @function Close the XMPP stream and the socket.
+   */
   this.disconnect = function() {
 		this.emit('disconnecting');
 		this.send('</stream:stream>');
 		this.socket.close();
 	};
-  this.emit = function(name, data) {
-    var handlers = this.handlers[name];
+  /**
+   * @function Emit an event.
+   * @param {String} aName The event name.
+   * @param {Function|Array|Object} [aData] Data about the event.
+   */
+  this.emit = function(aName, aData) {
+    var handlers = this.handlers[aName];
     if(!handlers)
       return;
 
     //FIXME Better idea than passing the context as argument?
     for(var i=0; i<handlers.length; i++)
-      handlers[i](data, this);
+      handlers[i](aData, this);
 
-    if(name.match('sendiq:'))
-      delete this.handlers[name];
+    if(aName.match('sendiq:'))
+      delete this.handlers[aName];
   };
-  this.on = function(name, callback) {
-    if(!this.handlers[name])
-      this.handlers[name] = [];
-    this.handlers[name].push(callback);
+  /**
+   * @function Register an event handler.
+   * @param {String} aName The event name.
+   * @param {Function} aCallback The callback to call when the event is emitted.
+   */
+  this.on = function(aName, callback) {
+    if(!this.handlers[aName])
+      this.handlers[aName] = [];
+    this.handlers[aName].push(callback);
   };
   //FIXME do this!
-  this.once = function(name, callback) {
-    if(!this.handlers[name])
-      this.handlers[name] = [];
-    this.handlers[name].push(callback);
-  };
-  //Internal
+  //~ this.once = function(name, callback) {
+    //~ if(!this.handlers[name])
+      //~ this.handlers[name] = [];
+    //~ this.handlers[name].push(callback);
+  //~ };
   this.on('stream:features', function(stanza, that) {
     var nodes = stanza.querySelectorAll('mechanism');
     //SASL/Auth features
@@ -210,7 +262,6 @@ Lightstring.Connection = function (aService) {
       });
     }
   });
-  //Internal
   this.on('success', function(stanza, that) {
     that.send(
       "<stream:stream to='"+that.domain+"'\
@@ -219,11 +270,9 @@ Lightstring.Connection = function (aService) {
                       version='1.0' />"
     );
   });
-  //Internal
   this.on('failure', function(stanza, that) {
     that.emit('conn-error', stanza.firstChild.tagName);
   });
-  //Internal
   this.on('challenge', function(stanza, that) {
     //FIXME this is mostly Strophe code
     
