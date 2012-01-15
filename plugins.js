@@ -40,9 +40,9 @@ Lightstring.stanza.roster = {
 Lightstring.getRoster = function(connection, aCallback) {
 	connection.send(this.stanza.roster.get(), function(answer){
 		var contacts = [];
-		var items = answer.querySelectorAll('item');
-    for(var i = 0; i<items.length; i++) {
-      var item = items[i];
+		var elems = answer.querySelectorAll('item');
+    for(var i = 0; i<elms.length; i++) {
+      var item = elms[i];
       var jid = item.getAttribute('jid');
       var name = item.getAttribute('name');
       var groups = item.querySelectorAll('group');
@@ -125,14 +125,16 @@ Lightstring.stanza.disco = {
 Lightstring.discoItems = function(aConnection, aTo, aCallback) {
 	aConnection.send(Lightstring.stanza.disco.items(aTo), function(answer){
 		var items = [];
-		answer.querySelectorAll('item').forEach(function(node) {
+    var elms = answer.querySelectorAll('item');
+    for(var i = 0; i < elms.length; i++) {
+      var node = elms[i];
 			var item = {
 				jid: node.getAttribute('jid'),
 				name: node.getAttribute('name'),
 				node: node.getAttribute('node')
 			}
 			items.push(item);
-		});
+		};
 		if(aCallback)
 			aCallback(items);
 	});
@@ -194,7 +196,9 @@ Lightstring.stanza.pubsub = {
 Lightstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(answer){
 		var items = [];
-		answer.querySelectorAll('item').forEach(function(node) {
+    var elms = answer.querySelectorAll('item');
+    for(var i = 0; i < elms.length; i++) {
+      var node = elms[i];
 			var item = {
 				id: node.getAttribute('id'),
 				name: node.querySelector('title').textContent,
@@ -205,7 +209,7 @@ Lightstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
 			if(miniature)
 				item.miniature = miniature.getAttribute('href');
 			items.push(item);
-		})
+		};
 		if(aCallback)
 			aCallback(items);
 	});
