@@ -23,5 +23,6 @@ Similar/related software
     https://code.google.com/p/node-xmpp-bosh/
     https://github.com/superfeedr/ejabberd-websockets
     https://code.google.com/p/prosody-modules/wiki/mod_websocket
+    http://kaazing.com/products/xmpp-edition
   Client-side:
     https://github.com/superfeedr/strophejs/tree/protocol-ed
