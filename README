@@ -1,15 +1,16 @@
 Known support
   Browser:
     See: http://caniuse.com/#search=websocket
-    For non websocket-aware browsers you can use https://github.com/gimite/web-socket-js/ , "HTML5 Web Socket implementation powered by Flash".
+    For non websocket-aware browsers you can use 
+    https://github.com/gimite/web-socket-js/
   Server:
     node-xmpp-bosh
 
 References
   XMPP:
-    http://xmpp.org/rfcs/rfc6120.html RFC 6120 - XML streams, SASL, TLS, stanza semantics 
-    http://xmpp.org/rfcs/rfc6121.html RFC 6121 - XMPP extensions for basic instant messaging and presence
-    http://xmpp.org/rfcs/rfc6122.html RFC 6122 - XMPP address format
+    http://xmpp.org/rfcs/rfc6120.html
+    http://xmpp.org/rfcs/rfc6121.html
+    http://xmpp.org/rfcs/rfc6122.html
     http://xmpp.org/xmpp-protocols/xmpp-extensions/
   WebSocket:
     http://dev.w3.org/html5/websockets/
@@ -20,8 +21,8 @@ References
 
 Similar/related software
   Server-side:
-    https://code.google.com/p/node-xmpp-bosh/ (a websocket/bosh proxy)
-    https://github.com/superfeedr/ejabberd-websockets (a module that adds websocket support to ejabberd)
-    https://code.google.com/p/prosody-modules/wiki/mod_websocket (a module that adds websocket support to prosody)
+    https://code.google.com/p/node-xmpp-bosh/
+    https://github.com/superfeedr/ejabberd-websockets
+    https://code.google.com/p/prosody-modules/wiki/mod_websocket
   Client-side:
-    https://github.com/superfeedr/strophejs/tree/protocol-ed (a websocket-aware fork of strophejs)
+    https://github.com/superfeedr/strophejs/tree/protocol-ed

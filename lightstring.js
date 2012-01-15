@@ -73,6 +73,12 @@ Lightstring.Connection = function (aService) {
                         xmlns='jabber:client'\
                         xmlns:stream='http://etherx.jabber.org/streams'\
                         version='1.0'/>";
+      //FIXME should be this but doesn't works with node-xmpp-bosh
+      //~ var stream =
+      //~   "<stream:stream to='"+that.domain+"'\
+                        xmlns='jabber:client'\
+                        xmlns:stream='http://etherx.jabber.org/streams'\
+                        version='1.0'/>";
       that.socket.send(stream)
       that.emit('XMLOutput', stream);
     });
