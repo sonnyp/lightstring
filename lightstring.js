@@ -58,14 +58,16 @@ Lightstring.Connection = function (aService) {
 
     //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635
     try {
-      this.socket = new WebSocket(this.service);
+      this.socket = new WebSocket(this.service, 'xmpp');
     }
     catch(error) {
-      this.socket = new MozWebSocket(this.service);
+      this.socket = new MozWebSocket(this.service, 'xmpp');
     }
 
     var that = this;
     this.socket.addEventListener('open', function() {
+      if(this.protocol !== 'xmpp')
+        throw "Lightstring: The server located at "+that.service+" is not XMPP aware.";
       var stream =
         "<stream:stream to='"+that.domain+"'\
                         xmlns='jabber:client'\
