@@ -16,15 +16,9 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-NodeList.prototype.forEach = function(aCallback) {
-	for(var i = 0; i<this.length; i++)
-		aCallback(this[i]);
-}
-
-
-//
-//Roster
-//
+//////////
+//Roster//
+//////////
 Lightstring.NS.roster = 'jabber:iq:roster';
 Lightstring.stanza.roster = {
 	'get': function() {
@@ -46,33 +40,35 @@ Lightstring.stanza.roster = {
 Lightstring.getRoster = function(connection, aCallback) {
 	connection.send(this.stanza.roster.get(), function(answer){
 		var contacts = [];
-		answer.querySelectorAll('item').forEach(function(item) {
-			var jid = item.getAttribute('jid');
-			var name = item.getAttribute('name');
-			var groups = item.querySelectorAll('group');
-			var subscription = item.getAttribute('subscription');
-			var contact = {};
-			if(name)
-				contact.name = name;
-			if(jid)
-				contact.jid = jid;
-			if(subscription)
-				contact.subscription = subscription;
-			if(groups.length > 0) {
-				contact.groups = [];
-				groups.forEach(function(group) {
-					contact.groups.push(group.textContent);
-				});
-			}
+		var items = answer.querySelectorAll('item');
+    for(var i = 0; i<items.length; i++) {
+      var item = items[i];
+      var jid = item.getAttribute('jid');
+      var name = item.getAttribute('name');
+      var groups = item.querySelectorAll('group');
+      var subscription = item.getAttribute('subscription');
+      var contact = {};
+      if(name)
+        contact.name = name;
+      if(jid)
+        contact.jid = jid;
+      if(subscription)
+        contact.subscription = subscription;
+      if(groups.length > 0) {
+        contact.groups = [];
+        groups.forEach(function(group) {
+          contact.groups.push(group.textContent);
+        });
+      }
 
-			contacts.push(contact);
-		});
+      contacts.push(contact);
+		};
 		aCallback(contacts);
 	});
 }
-//
-//vCard
-//
+/////////
+//vCard//
+/////////
 Lightstring.NS.vcard = 'vcard-temp';
 Lightstring.stanza.vcard = {
 	'get': function(aTo) {
@@ -94,9 +90,9 @@ Lightstring.getVcard = function(aConnection, aTo, aCallback) {
 			aCallback(null);
 	});
 }
-//
-//Disco
-//
+/////////
+//Disco//
+/////////
 Lightstring.NS['disco#info'] = "http://jabber.org/protocol/disco#info";
 Lightstring.NS['disco#items'] = "http://jabber.org/protocol/disco#items";
 Lightstring.stanza.disco = {
@@ -149,9 +145,9 @@ Lightstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
 		aCallback(creator);
 	});
 };
-//
-//PubSub
-//
+//////////
+//PubSub//
+//////////
 Lightstring.NS.x = "jabber:x:data";
 Lightstring.NS.pubsub = "http://jabber.org/protocol/pubsub";
 Lightstring.NS.pubsub_owner = "http://jabber.org/protocol/pubsub#owner";
@@ -265,9 +261,9 @@ Lightstring.pubsubGetAffiliations = function(aConnection, aTo, aNode, aCallback)
 Lightstring.pubsubSetAffiliations = function(aConnection, aTo, aNode, aAffiliations, aCallback) {
 	aConnection.send(Lightstring.stanza.pubsub.setAffiliations(aTo, aNode, aAffiliations));
 };
-//
-//IM
-//
+//////
+//IM//
+//////
 Lightstring.stanza.message = {
 	normal: function(aTo, aSubject, aText) {
 		return "<message type='normal' to='"+aTo+"'><subject>"+aSubject+"</subject><body>"+aText+"</body></message>";
