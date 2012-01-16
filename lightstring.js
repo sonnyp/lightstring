@@ -120,7 +120,7 @@ Lightstring.Connection = function(aService) {
     var that = this;
     this.socket.addEventListener('open', function() {
       if (this.protocol !== 'xmpp')
-        throw 'Lightstring: The server located at '+ that.service + ' is not XMPP aware.';
+        console.error('Lightstring: The server located at '+ that.service + ' doesn\'t seems to be XMPP aware.');
 
       var stream = Lightstring.stanza.stream.open(that.host);
 
@@ -159,7 +159,8 @@ Lightstring.Connection = function(aService) {
       var str = this.dom2xml(elm);
     }
     else {
-      that.emit('error', 'Unsupported data type.');
+      this.emit('error', 'Unsupported data type.');
+      return;
     }
 
 
@@ -173,7 +174,7 @@ Lightstring.Connection = function(aService) {
         this.on(elm.getAttribute('id'), aCallback);
     }
     else if (aCallback) {
-      that.emit('warning', 'Callback can\'t be called with non-iq stanza.');
+      this.emit('warning', 'Callback can\'t be called with non-iq stanza.');
     }
 
 
@@ -277,7 +278,7 @@ Lightstring.Connection = function(aService) {
   });
   this.on('success', function(stanza, that) {
     that.send(
-      "<stream:stream to='" + that.domain + "'\
+      "<stream:stream to='" + that.host + "'\
                       xmlns='jabber:client'\
                       xmlns:stream='http://etherx.jabber.org/streams'\
                       version='1.0' />"
@@ -324,7 +325,7 @@ Lightstring.Connection = function(aService) {
       }
     }
 
-    var digest_uri = 'xmpp/' + that.domain;
+    var digest_uri = 'xmpp/' + that.host;
     if (host !== null) {
         digest_uri = digest_uri + '/' + host;
     }

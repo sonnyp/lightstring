@@ -16,6 +16,19 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+////////////
+//Presence// http://xmpp.org/rfcs/rfc6121.html#presence
+////////////
+Lightstring.stanza.presence = function(aPriority) {
+  if(aPriority)
+    return "<presence><priority>"+aPriority+"</priority></presence>";
+  else
+    return "<presence/>";
+};
+Lightstring.presence = function(aConnection, aPriority) {
+  aConnection.send(Lightstring.stanza.presence(aPriority));
+};
+
 //////////
 //Roster//
 //////////
