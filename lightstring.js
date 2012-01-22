@@ -85,146 +85,6 @@ Lightstring.Connection = function(aService) {
     this.iqid++;
     return 'sendiq:' + this.iqid;
   };
-  /**
-   * @function Create and open a websocket then go though the XMPP authentification process.
-   * @param {String} [aJid] The JID (Jabber id) to use.
-   * @param {String} [aPassword] The associated password.
-   */
-  this.connect = function(aJid, aPassword) {
-    this.emit('connecting');
-    if (aJid)
-      this.jid = aJid;
-    if (this.jid) {
-      this.host = this.jid.split('@')[1];
-      this.node = this.jid.split('@')[0];
-      this.resource = this.jid.split('/')[1];
-    }
-    if (aPassword)
-      this.password = aPassword;
-
-    if (!this.jid)
-      throw 'Lightstring: Connection.jid is undefined.';
-    if (!this.password)
-      throw 'Lightstring: Connection.password is undefined.';
-    if (!this.service)
-      throw 'Lightstring: Connection.service is undefined.';
-
-    //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635
-    try {
-      this.socket = new WebSocket(this.service, 'xmpp');
-    }
-    catch (error) {
-      this.socket = new MozWebSocket(this.service, 'xmpp');
-    }
-
-    var that = this;
-    this.socket.addEventListener('open', function() {
-      if (this.protocol !== 'xmpp')
-        console.error('Lightstring: The server located at '+ that.service + ' doesn\'t seems to be XMPP aware.');
-
-      var stream = Lightstring.stanza.stream.open(that.host);
-
-      that.socket.send(stream);
-      that.emit('XMLOutput', stream);
-    });
-    this.socket.addEventListener('error', function(e) {
-      that.emit('error', e.data);
-      console.log(e.data);
-    });
-    this.socket.addEventListener('close', function(e) {
-			that.emit('disconnected', e.data);
-    });
-    this.socket.addEventListener('message', function(e) {
-      that.emit('XMLInput', e.data);
-      var elm = Lightstring.xml2dom(e.data);
-      that.emit('DOMInput', elm);
-      that.emit(elm.tagName, elm);
-
-			if (elm.tagName === 'iq')
-				that.emit(elm.getAttribute('id'), elm);
-    });
-  };
-  /**
-   * @function Send a message.
-   * @param {String|Object} aStanza The message to send.
-   * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
-   */
-  this.send = function(aStanza, aCallback) {
-    if (typeof aStanza === 'string') {
-      var str = aStanza;
-      var elm = Lightstring.xml2dom(str);
-    }
-    else if (aStanza instanceof Element) {
-      var elm = aStanza;
-      var str = this.dom2xml(elm);
-    }
-    else {
-      this.emit('error', 'Unsupported data type.');
-      return;
-    }
-
-
-    if (elm.tagName === 'iq') {
-			var id = elm.getAttribute('id');
-      if (!id) {
-        elm.setAttribute('id', this.getNewId());
-        str = Lightstring.dom2xml(elm);
-      }
-      if (aCallback)
-        this.on(elm.getAttribute('id'), aCallback);
-    }
-    else if (aCallback) {
-      this.emit('warning', 'Callback can\'t be called with non-iq stanza.');
-    }
-
-
-    this.socket.send(str);
-    this.emit('XMLOutput', str);
-    this.emit('DOMOutput', elm);
-  };
-  /**
-   * @function Closes the XMPP stream and the socket.
-   */
-  this.disconnect = function() {
-		this.emit('disconnecting');
-    var stream = Lighstring.stanza.stream.close();
-		this.send(stream);
-    that.emit('XMLOutput', stream);
-		this.socket.close();
-	};
-  /**
-   * @function Emits an event.
-   * @param {String} aName The event name.
-   * @param {Function|Array|Object} [aData] Data about the event.
-   */
-  this.emit = function(aName, aData) {
-    var handlers = this.handlers[aName];
-    if (!handlers)
-      return;
-
-    //FIXME Better idea than passing the context as argument?
-    for (var i = 0; i < handlers.length; i++)
-      handlers[i](aData, this);
-
-    if (aName.match('sendiq:'))
-      delete this.handlers[aName];
-  };
-  /**
-   * @function Register an event handler.
-   * @param {String} aName The event name.
-   * @param {Function} aCallback The callback to call when the event is emitted.
-   */
-  this.on = function(aName, callback) {
-    if (!this.handlers[aName])
-      this.handlers[aName] = [];
-    this.handlers[aName].push(callback);
-  };
-  //FIXME do this!
-  //~ this.once = function(name, callback) {
-    //~ if(!this.handlers[name])
-      //~ this.handlers[name] = [];
-    //~ this.handlers[name].push(callback);
-  //~ };
   this.on('stream:features', function(stanza, that) {
     var nodes = stanza.querySelectorAll('mechanism');
     //SASL/Auth features
@@ -353,4 +213,146 @@ Lightstring.Connection = function(aService) {
         + btoa(responseText) +
       '</response>');
   });
+};
+Lightstring.Connection.prototype = {
+  /**
+   * @function Create and open a websocket then go though the XMPP authentification process.
+   * @param {String} [aJid] The JID (Jabber id) to use.
+   * @param {String} [aPassword] The associated password.
+   */
+  connect: function(aJid, aPassword) {
+    this.emit('connecting');
+    if (aJid)
+      this.jid = aJid;
+    if (this.jid) {
+      this.host = this.jid.split('@')[1];
+      this.node = this.jid.split('@')[0];
+      this.resource = this.jid.split('/')[1];
+    }
+    if (aPassword)
+      this.password = aPassword;
+
+    if (!this.jid)
+      throw 'Lightstring: Connection.jid is undefined.';
+    if (!this.password)
+      throw 'Lightstring: Connection.password is undefined.';
+    if (!this.service)
+      throw 'Lightstring: Connection.service is undefined.';
+
+    //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635
+    try {
+      this.socket = new WebSocket(this.service, 'xmpp');
+    }
+    catch (error) {
+      this.socket = new MozWebSocket(this.service, 'xmpp');
+    }
+
+    var that = this;
+    this.socket.addEventListener('open', function() {
+      if (this.protocol !== 'xmpp')
+        console.error('Lightstring: The server located at '+ that.service + ' doesn\'t seems to be XMPP aware.');
+
+      var stream = Lightstring.stanza.stream.open(that.host);
+
+      that.socket.send(stream);
+      that.emit('XMLOutput', stream);
+    });
+    this.socket.addEventListener('error', function(e) {
+      that.emit('error', e.data);
+      console.log(e.data);
+    });
+    this.socket.addEventListener('close', function(e) {
+			that.emit('disconnected', e.data);
+    });
+    this.socket.addEventListener('message', function(e) {
+      that.emit('XMLInput', e.data);
+      var elm = Lightstring.xml2dom(e.data);
+      that.emit('DOMInput', elm);
+      that.emit(elm.tagName, elm);
+
+			if (elm.tagName === 'iq')
+				that.emit(elm.getAttribute('id'), elm);
+    });
+  },
+  /**
+   * @function Send a message.
+   * @param {String|Object} aStanza The message to send.
+   * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
+   */
+  send: function(aStanza, aCallback) {
+    if (typeof aStanza === 'string') {
+      var str = aStanza;
+      var elm = Lightstring.xml2dom(str);
+    }
+    else if (aStanza instanceof Element) {
+      var elm = aStanza;
+      var str = this.dom2xml(elm);
+    }
+    else {
+      this.emit('error', 'Unsupported data type.');
+      return;
+    }
+
+
+    if (elm.tagName === 'iq') {
+			var id = elm.getAttribute('id');
+      if (!id) {
+        elm.setAttribute('id', this.getNewId());
+        str = Lightstring.dom2xml(elm);
+      }
+      if (aCallback)
+        this.on(elm.getAttribute('id'), aCallback);
+    }
+    else if (aCallback) {
+      this.emit('warning', 'Callback can\'t be called with non-iq stanza.');
+    }
+
+
+    this.socket.send(str);
+    this.emit('XMLOutput', str);
+    this.emit('DOMOutput', elm);
+  },
+  /**
+   * @function Closes the XMPP stream and the socket.
+   */
+  disconnect: function() {
+		this.emit('disconnecting');
+    var stream = Lightstring.stanza.stream.close();
+		this.send(stream);
+    this.emit('XMLOutput', stream);
+		this.socket.close();
+	},
+  /**
+   * @function Emits an event.
+   * @param {String} aName The event name.
+   * @param {Function|Array|Object} [aData] Data about the event.
+   */
+  emit: function(aName, aData) {
+    var handlers = this.handlers[aName];
+    if (!handlers)
+      return;
+
+    //FIXME Better idea than passing the context as argument?
+    for (var i = 0; i < handlers.length; i++)
+      handlers[i](aData, this);
+
+    if (aName.match('sendiq:'))
+      delete this.handlers[aName];
+  },
+  /**
+   * @function Register an event handler.
+   * @param {String} aName The event name.
+   * @param {Function} aCallback The callback to call when the event is emitted.
+   */
+  on: function(aName, callback) {
+    if (!this.handlers[aName])
+      this.handlers[aName] = [];
+    this.handlers[aName].push(callback);
+  }
+  //FIXME do this!
+  //~ this.once = function(name, callback) {
+    //~ if(!this.handlers[name])
+      //~ this.handlers[name] = [];
+    //~ this.handlers[name].push(callback);
+  //~ };
 };
