@@ -138,7 +138,7 @@ Lightstring.Connection = function(aService) {
   });
   this.on('success', function(stanza, that) {
     that.send(
-      "<stream:stream to='" + that.host + "'" +
+      "<stream:stream to='" + that.jid.domain + "'" +
                     " xmlns='jabber:client'" +
                     " xmlns:stream='http://etherx.jabber.org/streams'" +
                     " version='1.0'/>"
@@ -185,16 +185,16 @@ Lightstring.Connection = function(aService) {
       }
     }
 
-    var digest_uri = 'xmpp/' + that.host;
+    var digest_uri = 'xmpp/' + that.jid.domain;
     if (host !== null)
         digest_uri = digest_uri + '/' + host;
-    var A1 = MD5.hash(that.node +
+    var A1 = MD5.hash(that.jid.node +
                       ':' + realm + ':' + that.password) +
-        ':' + nonce + ':' + cnonce;
+                      ':' + nonce + ':' + cnonce;
     var A2 = 'AUTHENTICATE:' + digest_uri;
 
     var responseText = '';
-    responseText += 'username=' + _quote(that.node) + ',';
+    responseText += 'username=' + _quote(that.jid.node) + ',';
     responseText += 'realm=' + _quote(realm) + ',';
     responseText += 'nonce=' + _quote(nonce) + ',';
     responseText += 'cnonce=' + _quote(cnonce) + ',';
@@ -221,17 +221,11 @@ Lightstring.Connection.prototype = {
    */
   connect: function(aJid, aPassword) {
     this.emit('connecting');
-    if (aJid)
-      this.jid = aJid;
-    if (this.jid) {
-      this.host = this.jid.split('@')[1];
-      this.node = this.jid.split('@')[0];
-      this.resource = this.jid.split('/')[1];
-    }
+    this.jid = new Lightstring.JID(aJid);
     if (aPassword)
       this.password = aPassword;
 
-    if (!this.jid)
+    if (!this.jid.bare)
       throw 'Lightstring: Connection.jid is undefined.';
     if (!this.password)
       throw 'Lightstring: Connection.password is undefined.';
@@ -251,7 +245,7 @@ Lightstring.Connection.prototype = {
       if (this.protocol !== 'xmpp')
         console.error('Lightstring: The server located at '+ that.service + ' doesn\'t seems to be XMPP aware.');
 
-      var stream = Lightstring.stanza.stream.open(that.host);
+      var stream = Lightstring.stanza.stream.open(that.jid.domain);
 
       that.socket.send(stream);
       that.emit('XMLOutput', stream);
@@ -270,7 +264,7 @@ Lightstring.Connection.prototype = {
       that.emit(elm.tagName, elm);
 
       if (elm.tagName === 'iq')
-        that.emit(elm.getAttribute('id'), elm);
+        that.emit(elm.getAttribute('id'), elm); //FIXME: possible attack vector.
     });
   },
   /**
