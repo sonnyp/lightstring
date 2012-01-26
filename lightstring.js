@@ -24,14 +24,14 @@ var Lightstring = {
   /**
    * @namespace Holds XMPP namespaces.
    */
-	NS: {
+  NS: {
     stream: 'http://etherx.jabber.org/streams',
     jabberClient: 'jabber:client'
   },
   /**
    * @namespace Holds XMPP stanza builders.
    */
-	stanza: {
+  stanza: {
     stream: {
       open: function(aService) {
         //FIXME no ending "/" - node-xmpp-bosh bug
@@ -262,7 +262,7 @@ Lightstring.Connection.prototype = {
       console.log(e.data);
     });
     this.socket.addEventListener('close', function(e) {
-			that.emit('disconnected', e.data);
+      that.emit('disconnected', e.data);
     });
     this.socket.addEventListener('message', function(e) {
       that.emit('XMLInput', e.data);
@@ -270,8 +270,8 @@ Lightstring.Connection.prototype = {
       that.emit('DOMInput', elm);
       that.emit(elm.tagName, elm);
 
-			if (elm.tagName === 'iq')
-				that.emit(elm.getAttribute('id'), elm);
+      if (elm.tagName === 'iq')
+        that.emit(elm.getAttribute('id'), elm);
     });
   },
   /**
@@ -295,7 +295,7 @@ Lightstring.Connection.prototype = {
 
 
     if (elm.tagName === 'iq') {
-			var id = elm.getAttribute('id');
+      var id = elm.getAttribute('id');
       if (!id) {
         elm.setAttribute('id', this.getNewId());
         str = Lightstring.dom2xml(elm);
@@ -316,12 +316,12 @@ Lightstring.Connection.prototype = {
    * @function Closes the XMPP stream and the socket.
    */
   disconnect: function() {
-		this.emit('disconnecting');
+    this.emit('disconnecting');
     var stream = Lightstring.stanza.stream.close();
-		this.send(stream);
+    this.send(stream);
     this.emit('XMLOutput', stream);
-		this.socket.close();
-	},
+    this.socket.close();
+  },
   /**
    * @function Emits an event.
    * @param {String} aName The event name.
