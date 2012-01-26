@@ -119,21 +119,27 @@ Lightstring.Connection = function(aService) {
     else {
       that.emit('features', stanza);
       //Bind http://xmpp.org/rfcs/rfc3920.html#bind
-      that.send(
+      var bind =
         "<iq type='set' xmlns='jabber:client'>" +
-          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>" +
-        "</iq>",
-        function() {
-        //Session http://xmpp.org/rfcs/rfc3921.html#session
-        that.send(
-          "<iq type='set' xmlns='jabber:client'>" +
-            "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
-          "</iq>",
-          function() {
-            that.emit('connected');
-          }
-        );
-      });
+          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
+            (that.jid.resource? "<resource>" + that.jid.resource + "</resource>": "") +
+          "</bind>" +
+        "</iq>";
+      that.send(
+        bind,
+        function(stanza) {
+          //Session http://xmpp.org/rfcs/rfc3921.html#session
+          that.jid = new Lightstring.JID(stanza.textContent);
+          that.send(
+            "<iq type='set' xmlns='jabber:client'>" +
+              "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
+            "</iq>",
+            function() {
+              that.emit('connected');
+            }
+          );
+        }
+      );
     }
   });
   this.on('success', function(stanza, that) {
