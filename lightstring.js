@@ -263,8 +263,12 @@ Lightstring.Connection.prototype = {
       that.emit('DOMInput', elm);
       that.emit(elm.tagName, elm);
 
-      if (elm.tagName === 'iq')
+      if (elm.tagName === 'iq') {
+        var payload = elm.firstChild;
+        if (payload)
+          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, elm);
         that.emit(elm.getAttribute('id'), elm); //FIXME: possible attack vector.
+      }
     });
   },
   /**
