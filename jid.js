@@ -38,6 +38,15 @@ Lightstring.JID.prototype = {
     return this.full;
   },
 
+  equals: function(aJID) {
+    if (!(aJID instanceof Lightstring.JID))
+      aJID = new Lightstring.JID(aJID);
+
+    return (this.node === aJID.node &&
+            this.domain === aJID.domain &&
+            this.resource === aJID.resource)
+  },
+
   get bare() {
     if (!this.domain)
       return null;
