@@ -35,13 +35,13 @@ var Lightstring = {
     stream: {
       open: function(aService) {
         //FIXME no ending "/" - node-xmpp-bosh bug
-        return "<stream:stream to='" + aService + "'\
-                  xmlns='" + Lightstring.NS.jabberClient + "'\
-                  xmlns:stream='" + Lightstring.NS.stream + "'\
-                  version='1.0'/>";
+        return "<stream:stream to='" + aService + "'" +
+                             " xmlns='" + Lightstring.NS.jabberClient + "'" +
+                             " xmlns:stream='" + Lightstring.NS.stream + "'" +
+                             " version='1.0'/>";
       },
       close: function() {
-        return '</stream:stream>';
+        return "</stream:stream>";
       }
     }
   },
@@ -98,8 +98,8 @@ Lightstring.Connection = function(aService) {
       //FIXME support SCRAM-SHA1 && allow specify method preferences
       if ('DIGEST-MD5' in mechanisms)
         that.send(
-          "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'\
-                 mechanism='DIGEST-MD5'/>"
+          "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
+               " mechanism='DIGEST-MD5'/>"
         );
       else if ('PLAIN' in mechanisms) {
         var token = btoa(
@@ -110,8 +110,8 @@ Lightstring.Connection = function(aService) {
           that.password
         );
         that.send(
-          "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'\
-                 mechanism='PLAIN'>" + token + '</auth>'
+          "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
+               " mechanism='PLAIN'>" + token + "</auth>"
         );
       }
     }
@@ -120,15 +120,15 @@ Lightstring.Connection = function(aService) {
       that.emit('features', stanza);
       //Bind http://xmpp.org/rfcs/rfc3920.html#bind
       that.send(
-        "<iq type='set' xmlns='jabber:client'>\
-          <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>\
-         </iq>",
+        "<iq type='set' xmlns='jabber:client'>" +
+          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>" +
+        "</iq>",
         function() {
         //Session http://xmpp.org/rfcs/rfc3921.html#session
         that.send(
-          "<iq type='set' xmlns='jabber:client'>\
-            <session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>\
-          </iq>",
+          "<iq type='set' xmlns='jabber:client'>" +
+            "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
+          "</iq>",
           function() {
             that.emit('connected');
           }
@@ -138,10 +138,10 @@ Lightstring.Connection = function(aService) {
   });
   this.on('success', function(stanza, that) {
     that.send(
-      "<stream:stream to='" + that.host + "'\
-                      xmlns='jabber:client'\
-                      xmlns:stream='http://etherx.jabber.org/streams'\
-                      version='1.0' />"
+      "<stream:stream to='" + that.host + "'" +
+                    " xmlns='jabber:client'" +
+                    " xmlns:stream='http://etherx.jabber.org/streams'" +
+                    " version='1.0'/>"
     );
   });
   this.on('failure', function(stanza, that) {
@@ -186,9 +186,8 @@ Lightstring.Connection = function(aService) {
     }
 
     var digest_uri = 'xmpp/' + that.host;
-    if (host !== null) {
+    if (host !== null)
         digest_uri = digest_uri + '/' + host;
-    }
     var A1 = MD5.hash(that.node +
                       ':' + realm + ':' + that.password) +
         ':' + nonce + ':' + cnonce;
@@ -209,9 +208,9 @@ Lightstring.Connection = function(aService) {
                       MD5.hexdigest(A2))) + ',';
     responseText += 'charset="utf-8"';
     that.send(
-      "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>"
-        + btoa(responseText) +
-      '</response>');
+      "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>" +
+        btoa(responseText) +
+      "</response>");
   });
 };
 Lightstring.Connection.prototype = {
@@ -303,9 +302,8 @@ Lightstring.Connection.prototype = {
       if (aCallback)
         this.on(elm.getAttribute('id'), aCallback);
     }
-    else if (aCallback) {
+    else if (aCallback)
       this.emit('warning', 'Callback can\'t be called with non-iq stanza.');
-    }
 
 
     this.socket.send(str);
