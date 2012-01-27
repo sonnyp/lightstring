@@ -154,10 +154,31 @@ Lightstring.discoItems = function(aConnection, aTo, aCallback) {
 };
 Lightstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
   aConnection.send(Lightstring.stanza.disco.info(aTo, aNode), function(answer){
-    var field = answer.querySelector('field[var="pubsub#creator"] > value');
-    var creator = field ? field.textContent : '';
-    //FIXME callback the entire data
-    aCallback(creator);
+    var identities = [];
+    var features = [];
+
+    var children = answer.firstChild.children;
+    var length = children.length;
+
+    for (var i = 0; i < length; i++) {
+      var child = children[i];
+
+      if (child.localName === 'feature')
+        features.push(child.getAttributeNS(null, 'var'));
+
+      else if (child.localName === 'identity') {
+        var identity = {
+          category: child.getAttributeNS(null, 'category'),
+          type: child.getAttributeNS(null, 'type')
+        };
+        var name = child.getAttributeNS(null, 'name');
+        if (name)
+          identity.name = name;
+        identities.push(identity);
+      }
+    }
+
+    aCallback({identities: identities, features: features});
   });
 };
 //////////
