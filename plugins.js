@@ -188,56 +188,6 @@ Lightstring.NS.x = "jabber:x:data";
 Lightstring.NS.pubsub = "http://jabber.org/protocol/pubsub";
 Lightstring.NS.pubsub_owner = "http://jabber.org/protocol/pubsub#owner";
 Lightstring.stanza.pubsub = {
-<<<<<<< HEAD
-	getConfig: function(aTo, aNode) {
-		return  "<iq type='get' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><configure node='"+aNode+"'/></pubsub></iq>";
-	},
-	items: function(aTo, aNode) {
-		return  "<iq type='get' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><items node='"+aNode+"'/></pubsub></iq>";
-	},
-	affiliations: function(aTo, aNode) {
-		return "<iq type='get' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><affiliations node='"+aNode+"'/></pubsub></iq>";
-	},
-	publish: function(aTo, aNode, aItem, aId) {
-		return  "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><publish node='"+aNode+"'><item id='"+aId+"'>"+aItem+"</item></publish></pubsub></iq>";
-	},
-	retract: function(aTo, aNode, aItem) {
-		return  "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><retract node='"+aNode+"'><item id='"+aItem+"'/></retract></pubsub></iq>";
-	},
-	'delete': function(aTo, aNode, aURI) {
-		return  "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><delete node='"+aNode+"'/></pubsub></iq>";
-	},
-	config: function(aTo, aNode, aFields) {
-		var iq = "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><configure node='"+aNode+"'><x xmlns='"+Lightstring.NS.x+"' type='submit'>";
-		if(aFields) {
-			aFields.forEach(function(field) {
-				iq += field;
-			});
-		}
-		iq += "</x></configure></pubsub></iq>";
-		return iq;
-	},
-	create: function(aTo, aNode, aFields) {
-		var iq = "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><create node='"+aNode+"'/>";
-		if(aFields) {
-			iq += "<configure><x xmlns='"+Lightstring.NS.x+"' type='submit'>"
-			aFields.forEach(function(field) {
-				iq += field;
-			});
-			iq += "</x></configure>";
-		}
-		iq += "</pubsub></iq>";
-		return iq;
-	},
-	setAffiliations: function(aTo, aNode, aAffiliations) {
-		var iq = "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><affiliations node='"+aNode+"'>";
-		for(var i = 0; i < aAffiliations.length; i++) {
-			iq += "<affiliation jid='"+aAffiliations[i][0]+"' affiliation='"+aAffiliations[i][1]+"'/>"
-		}
-		iq += "</affiliations></pubsub></iq>";
-		return iq;
-	},
-=======
   getConfig: function(aTo, aNode) {
     return  "<iq type='get' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><configure node='"+aNode+"'/></pubsub></iq>";
   },
@@ -276,7 +226,6 @@ Lightstring.stanza.pubsub = {
     iq += "</affiliations></pubsub></iq>";
     return iq;
   },
->>>>>>> f6a7c0f93d154c2cd34dfdda4ab8eec808b91b34
 };
 Lightstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
   aConnection.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(answer){
