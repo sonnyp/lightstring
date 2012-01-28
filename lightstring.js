@@ -86,7 +86,20 @@ var Lightstring = {
     finally {
       return XML;
     };
-  }
+  },
+  /**
+   * @function Get an unique identifier.
+   * @param {String} [aString] Prefix to put before the identifier.
+   * @return {String} Identifier.
+   */
+  newId: (function() {
+    var id = 1024;
+    return function(prefix) {
+      if (typeof prefix === 'string')
+        return prefix + id++;
+      return '' + id++;
+    };
+  })()
 };
 
 /**
@@ -98,11 +111,6 @@ Lightstring.Connection = function(aService) {
   if (aService)
     this.service = aService;
   this.handlers = {};
-  this.iqid = 1024;
-  this.getNewId = function() {
-    this.iqid++;
-    return 'sendiq:' + this.iqid;
-  };
   this.on('stream:features', function(stanza, that) {
     var nodes = stanza.DOM.querySelectorAll('mechanism');
     //SASL/Auth features
@@ -321,8 +329,7 @@ Lightstring.Connection.prototype = {
       var id = stanza.DOM.getAttribute('id');
       //TODO: This should be done by a plugin
       if (!id) {
-        alert(Lightstring.DOM2XML(stanza.DOM));
-        stanza.DOM.setAttribute('id', this.getNewId());
+        stanza.DOM.setAttribute('id', Lightstring.newId('sendiq:'));
       }
       if (aCallback)
         this.on(stanza.DOM.getAttribute('id'), aCallback);
