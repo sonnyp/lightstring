@@ -58,16 +58,34 @@ var Lightstring = {
    * @param {String} aString XML string.
    * @return {Object} Domified XML.
    */
-  xml2dom: function(aString) {
-    return this.parser.parseFromString(aString, 'text/xml').documentElement;
+  XML2DOM: function(aString) {
+    var DOM = null;
+    try {
+      DOM = this.parser.parseFromString(aString, 'text/xml').documentElement;
+    }
+    catch (e) {
+      alert(e);
+    }
+    finally {
+      return DOM;
+    };
   },
   /**
    * @function Transforms a DOM object to a XML string.
    * @param {Object} aString DOM object.
    * @return {String} Stringified DOM.
    */
-  dom2xml: function(aElement) {
-    return this.serializer.serializeToString(aElement);
+  DOM2XML: function(aElement) {
+    var XML = null;
+    try {
+      XML = this.serializer.serializeToString(aElement);
+    }
+    catch (e) {
+      alert(e);
+    }
+    finally {
+      return XML;
+    };
   }
 };
 
@@ -86,7 +104,7 @@ Lightstring.Connection = function(aService) {
     return 'sendiq:' + this.iqid;
   };
   this.on('stream:features', function(stanza, that) {
-    var nodes = stanza.querySelectorAll('mechanism');
+    var nodes = stanza.DOM.querySelectorAll('mechanism');
     //SASL/Auth features
     if (nodes.length > 0) {
       that.emit('mechanisms', stanza);
@@ -125,11 +143,12 @@ Lightstring.Connection = function(aService) {
             (that.jid.resource? "<resource>" + that.jid.resource + "</resource>": "") +
           "</bind>" +
         "</iq>";
+
       that.send(
         bind,
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          that.jid = new Lightstring.JID(stanza.textContent);
+          that.jid = new Lightstring.JID(stanza.DOM.textContent);
           that.send(
             "<iq type='set' xmlns='jabber:client'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
@@ -151,7 +170,7 @@ Lightstring.Connection = function(aService) {
     );
   });
   this.on('failure', function(stanza, that) {
-    that.emit('conn-error', stanza.firstChild.tagName);
+    that.emit('conn-error', stanza.DOM.firstChild.tagName);
   });
   this.on('challenge', function(stanza, that) {
     //FIXME this is mostly Strophe code
@@ -160,7 +179,7 @@ Lightstring.Connection = function(aService) {
       return '"' + str.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
     };
 
-    var challenge = atob(stanza.textContent);
+    var challenge = atob(stanza.DOM.textContent);
 
     var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
@@ -248,13 +267,15 @@ Lightstring.Connection.prototype = {
 
     var that = this;
     this.socket.addEventListener('open', function() {
-      if (this.protocol !== 'xmpp')
-        console.error('Lightstring: The server located at '+ that.service + ' doesn\'t seems to be XMPP aware.');
+      //TODO: if (this.protocol !== 'xmpp')
 
       var stream = Lightstring.stanza.stream.open(that.jid.domain);
-
+      //TODO: Use Lightstring.Connection.send (problem with parsing steam);
       that.socket.send(stream);
-      that.emit('XMLOutput', stream);
+      var stanza = {
+        XML: stream
+      };
+      that.emit('output', stanza);
     });
     this.socket.addEventListener('error', function(e) {
       that.emit('error', e.data);
@@ -264,16 +285,21 @@ Lightstring.Connection.prototype = {
       that.emit('disconnected', e.data);
     });
     this.socket.addEventListener('message', function(e) {
-      that.emit('XMLInput', e.data);
-      var elm = Lightstring.xml2dom(e.data);
-      that.emit('DOMInput', elm);
-      that.emit(elm.tagName, elm);
+      var stanza = new Lightstring.Stanza(e.data);
 
-      if (elm.tagName === 'iq') {
-        var payload = elm.firstChild;
+      //TODO node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
+      that.emit('input', stanza);
+      
+      if(!stanza.DOM)
+        return;
+      
+      that.emit(stanza.DOM.tagName, stanza);
+
+      if (stanza.DOM.tagName === 'iq') {
+        var payload = stanza.DOM.firstChild;
         if (payload)
-          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, elm);
-        that.emit(elm.getAttribute('id'), elm); //FIXME: possible attack vector.
+          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
+        that.emit(stanza.DOM.getAttribute('id'), stanza); //FIXME: possible attack vector.
       }
     });
   },
@@ -283,36 +309,32 @@ Lightstring.Connection.prototype = {
    * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
    */
   send: function(aStanza, aCallback) {
-    if (typeof aStanza === 'string') {
-      var str = aStanza;
-      var elm = Lightstring.xml2dom(str);
-    }
-    else if (aStanza instanceof Element) {
-      var elm = aStanza;
-      var str = this.dom2xml(elm);
-    }
-    else {
-      this.emit('error', 'Unsupported data type.');
+    if (!(aStanza instanceof Lightstring.Stanza))
+      var stanza = new Lightstring.Stanza(aStanza);
+    else
+      var stanza = aStanza;
+
+    if(!stanza)
       return;
-    }
 
-
-    if (elm.tagName === 'iq') {
-      var id = elm.getAttribute('id');
+    if (stanza.DOM.tagName === 'iq') {
+      var id = stanza.DOM.getAttribute('id');
+      //TODO: This should be done by a plugin
       if (!id) {
-        elm.setAttribute('id', this.getNewId());
-        str = Lightstring.dom2xml(elm);
+        alert(Lightstring.DOM2XML(stanza.DOM));
+        stanza.DOM.setAttribute('id', this.getNewId());
       }
       if (aCallback)
-        this.on(elm.getAttribute('id'), aCallback);
+        this.on(stanza.DOM.getAttribute('id'), aCallback);
     }
-    else if (aCallback)
+    else if (aCallback) {
       this.emit('warning', 'Callback can\'t be called with non-iq stanza.');
+    }
 
 
-    this.socket.send(str);
-    this.emit('XMLOutput', str);
-    this.emit('DOMOutput', elm);
+    //TODO this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
+    this.socket.send(Lightstring.DOM2XML(stanza.DOM));
+    this.emit('output', stanza);
   },
   /**
    * @function Closes the XMPP stream and the socket.
