@@ -185,6 +185,16 @@ Lightstring.stanza.pubsub = {
 	'delete': function(aTo, aNode, aURI) {
 		return  "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub_owner+"'><delete node='"+aNode+"'/></pubsub></iq>";
 	},
+	config: function(aTo, aNode, aFields) {
+		var iq = "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><configure node='"+aNode+"'><x xmlns='"+Lightstring.NS.x+"' type='submit'>";
+		if(aFields) {
+			aFields.forEach(function(field) {
+				iq += field;
+			});
+		}
+		iq += "</x></configure></pubsub></iq>";
+		return iq;
+	},
 	create: function(aTo, aNode, aFields) {
 		var iq = "<iq type='set' to='"+aTo+"'><pubsub xmlns='"+Lightstring.NS.pubsub+"'><create node='"+aNode+"'/>";
 		if(aFields) {
