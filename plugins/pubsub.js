@@ -63,9 +63,9 @@ Lightstring.stanza.pubsub = {
   },
 };
 Lightstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(answer){
+  aConnection.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(stanza){
     var items = [];
-    var elms = answer.querySelectorAll('item');
+    var elms = stanza.DOM.querySelectorAll('item');
     for(var i = 0; i < elms.length; i++) {
       var node = elms[i];
       var item = {
@@ -84,16 +84,16 @@ Lightstring.pubsubItems = function(aConnection, aTo, aNode, aCallback) {
   });
 }
 Lightstring.pubsubCreate = function(aConnection, aTo, aNode, aFields, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.create(aTo, aNode, aFields), function(answer) {
-    if(answer.getAttribute('type') === 'result')
-      aCallback(null, answer);
+  aConnection.send(Lightstring.stanza.pubsub.create(aTo, aNode, aFields), function(stanza) {
+    if(stanza.DOM.getAttribute('type') === 'result')
+      aCallback(null, stanza);
     else
-      aCallback(answer, null);
+      aCallback(stanza, null);
   });
 };
 Lightstring.pubsubConfig = function(aConnection, aTo, aNode, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.getConfig(aTo, aNode), function(answer){
-    var accessmodel = answer.querySelector('field[var="pubsub#access_model"]').lastChild.textContent;
+  aConnection.send(Lightstring.stanza.pubsub.getConfig(aTo, aNode), function(stanza){
+    var accessmodel = stanza.DOM.querySelector('field[var="pubsub#access_model"]').lastChild.textContent;
     if(accessmodel)
       aCallback(accessmodel);
     else
@@ -101,30 +101,30 @@ Lightstring.pubsubConfig = function(aConnection, aTo, aNode, aCallback) {
   });
 }
 Lightstring.pubsubRetract = function(aConnection, aTo, aNode, aItem, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), function(answer){
+  aConnection.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), function(stanza){
     if(aCallback)
-      aCallback(answer);
+      aCallback(stanza);
   });
 }
 Lightstring.pubsubPublish = function(aConnection, aTo, aNode, aItem, aId, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), function(answer){
+  aConnection.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), function(stanza){
     if(answer.getAttribute('type') === 'result')
-      aCallback(null, answer);
+      aCallback(null, stanza);
     else
-      aCallback(answer, null);
+      aCallback(stanza, null);
   });
 }
 Lightstring.pubsubDelete = function(aConnection, aTo, aNode, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.delete(aTo, aNode), function(answer){
+  aConnection.send(Lightstring.stanza.pubsub.delete(aTo, aNode), function(stanza){
     if(aCallback)
-      aCallback(answer);
+      aCallback(stanza);
   });
 }
 Lightstring.pubsubGetAffiliations = function(aConnection, aTo, aNode, aCallback) {
-  aConnection.send(Lightstring.stanza.pubsub.affiliations(aTo, aNode), function(answer) {
-    if((answer.getAttribute('type') === 'result') && aCallback) {
+  aConnection.send(Lightstring.stanza.pubsub.affiliations(aTo, aNode), function(stanza) {
+    if((stanza.DOM.getAttribute('type') === 'result') && aCallback) {
       var affiliations = {};
-      answer.querySelectorAll('affiliation').forEach(function(affiliation) {
+      stanza.DOM.querySelectorAll('affiliation').forEach(function(affiliation) {
         affiliations[affiliation.getAttribute("jid")] = affiliation.getAttribute("affiliation");
       })
       aCallback(affiliations);

@@ -30,9 +30,9 @@ Lightstring.stanza.vcard = {
 };
 //FIXME we should return a proper vcard, not an XMPP one
 Lightstring.getVcard = function(aConnection, aTo, aCallback) {
-  aConnection.send(Lightstring.stanza.vcard.get(aTo), function(answer, err){
-    if(answer) {
-      var vcard = answer.querySelector('vCard');
+  aConnection.send(Lightstring.stanza.vcard.get(aTo), function(stanza, err){
+    if(stanza) {
+      var vcard = stanza.DOM.querySelector('vCard');
       if(vcard)
         aCallback(vcard);
     }    

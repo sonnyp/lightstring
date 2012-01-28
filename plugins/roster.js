@@ -38,9 +38,9 @@ Lightstring.stanza.roster = {
   }
 };
 Lightstring.getRoster = function(connection, aCallback) {
-  connection.send(this.stanza.roster.get(), function(answer){
+  connection.send(this.stanza.roster.get(), function(stanza){
     var contacts = [];
-    var elems = answer.querySelectorAll('item');
+    var elems = stanza.DOM.querySelectorAll('item');
     for(var i = 0; i<elms.length; i++) {
       var item = elms[i];
       var jid = item.getAttribute('jid');

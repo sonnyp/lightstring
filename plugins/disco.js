@@ -49,9 +49,9 @@ Lightstring.stanza.disco = {
   }
 };
 Lightstring.discoItems = function(aConnection, aTo, aCallback) {
-  aConnection.send(Lightstring.stanza.disco.items(aTo), function(answer){
+  aConnection.send(Lightstring.stanza.disco.items(aTo), function(stanza){
     var items = [];
-    var elms = answer.querySelectorAll('item');
+    var elms = stanza.DOM.querySelectorAll('item');
     for(var i = 0; i < elms.length; i++) {
       var node = elms[i];
       var item = {
@@ -66,11 +66,11 @@ Lightstring.discoItems = function(aConnection, aTo, aCallback) {
   });
 };
 Lightstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
-  aConnection.send(Lightstring.stanza.disco.info(aTo, aNode), function(answer){
+  aConnection.send(Lightstring.stanza.disco.info(aTo, aNode), function(stanza){
     var identities = [];
     var features = [];
 
-    var children = answer.firstChild.children;
+    var children = stanza.DOM.firstChild.children;
     var length = children.length;
 
     for (var i = 0; i < length; i++) {
