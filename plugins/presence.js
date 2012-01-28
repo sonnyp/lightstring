@@ -2,6 +2,7 @@
 
 /**
   Copyright (c) 2011, Sonny Piers <sonny at fastmail dot net>
+  Copyright (c) 2012, Emmanuel Gil Peyrot <linkmauve@linkmauve.fr>
 
   Permission to use, copy, modify, and/or distribute this software for any
   purpose with or without fee is hereby granted, provided that the above
@@ -19,12 +20,36 @@
 ////////////
 //Presence// http://xmpp.org/rfcs/rfc6121.html#presence
 ////////////
-Lightstring.stanza.presence = function(aPriority) {
-  if(aPriority)
-    return "<presence><priority>"+aPriority+"</priority></presence>";
-  else
-    return "<presence/>";
-};
-Lightstring.presence = function(aConnection, aPriority) {
-  aConnection.send(Lightstring.stanza.presence(aPriority));
-};
+(function() {
+  var legal_types = ['error', 'probe', 'subscribe', 'subscribed', 'unavailable', 'unsubscribe', 'unsubscribed'];
+
+  Lightstring.stanza.presence = function(object) {
+    var aPriority, aShow, aStatus;
+    var payloads = "";
+    var attributs = "";
+
+    if (object.type && legal_types.indexOf(object.type) !== -1)
+      attributs += " type='" + object.type + "'";
+
+    if (object.priority)
+      payloads += "<priority>" + object.priority + "</priority>";
+
+    if (object.show)
+      payloads += "<show>" + object.show + "</show>";
+
+    if (object.status)
+      payloads += "<status>" + object.status + "</status>";
+
+    if (object.payload)
+      payloads += object.payload;
+
+    if (payloads)
+      return "<presence" + attributs + ">" + payloads + "</presence>";
+    else
+      return "<presence" + attributs + "/>";
+  };
+
+  Lightstring.presence = function(aConnection, aPriority) {
+    aConnection.send(Lightstring.stanza.presence(aPriority));
+  };
+})();
