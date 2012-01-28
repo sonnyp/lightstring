@@ -68,7 +68,20 @@ var Lightstring = {
    */
   dom2xml: function(aElement) {
     return this.serializer.serializeToString(aElement);
-  }
+  },
+  /**
+   * @function Get an unique identifier.
+   * @param {String} [aString] Prefix to put before the identifier.
+   * @return {String} Identifier.
+   */
+  newId: (function() {
+    var id = 1024;
+    return function(prefix) {
+      if (typeof prefix === 'string')
+        return prefix + id++;
+      return '' + id++;
+    };
+  })();
 };
 
 /**
@@ -80,11 +93,6 @@ Lightstring.Connection = function(aService) {
   if (aService)
     this.service = aService;
   this.handlers = {};
-  this.iqid = 1024;
-  this.getNewId = function() {
-    this.iqid++;
-    return 'sendiq:' + this.iqid;
-  };
   this.on('stream:features', function(stanza, that) {
     var nodes = stanza.querySelectorAll('mechanism');
     //SASL/Auth features
@@ -300,7 +308,7 @@ Lightstring.Connection.prototype = {
     if (elm.tagName === 'iq') {
       var id = elm.getAttribute('id');
       if (!id) {
-        elm.setAttribute('id', this.getNewId());
+        elm.setAttribute('id', Lightstring.newId('sendiq:'));
         str = Lightstring.dom2xml(elm);
       }
       if (aCallback)
