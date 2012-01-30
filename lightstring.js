@@ -328,9 +328,8 @@ Lightstring.Connection.prototype = {
     if (stanza.DOM.tagName === 'iq') {
       var id = stanza.DOM.getAttribute('id');
       //TODO: This should be done by a plugin
-      if (!id) {
+      if (!id)
         stanza.DOM.setAttribute('id', Lightstring.newId('sendiq:'));
-      }
       if (aCallback)
         this.on(stanza.DOM.getAttribute('id'), aCallback);
     }
@@ -340,7 +339,9 @@ Lightstring.Connection.prototype = {
 
 
     //TODO this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
-    this.socket.send(Lightstring.DOM2XML(stanza.DOM));
+    var fixme = Lightstring.DOM2XML(stanza.DOM);
+    stanza.XML = fixme;
+    this.socket.send(fixme);
     this.emit('output', stanza);
   },
   /**

@@ -69,28 +69,55 @@ Lightstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
   aConnection.send(Lightstring.stanza.disco.info(aTo, aNode), function(stanza){
     var identities = [];
     var features = [];
+    var fields = {};
 
-    var children = stanza.DOM.firstChild.children;
+    var children = stanza.DOM.firstChild.childNodes;
     var length = children.length;
 
     for (var i = 0; i < length; i++) {
-      var child = children[i];
 
-      if (child.localName === 'feature')
-        features.push(child.getAttributeNS(null, 'var'));
+      if (children[i].localName === 'feature')
+        features.push(children[i].getAttributeNS(null, 'var'));
 
-      else if (child.localName === 'identity') {
+      else if (children[i].localName === 'identity') {
         var identity = {
-          category: child.getAttributeNS(null, 'category'),
-          type: child.getAttributeNS(null, 'type')
+          category: children[i].getAttributeNS(null, 'category'),
+          type: children[i].getAttributeNS(null, 'type')
         };
-        var name = child.getAttributeNS(null, 'name');
+        var name = children[i].getAttributeNS(null, 'name');
         if (name)
           identity.name = name;
         identities.push(identity);
       }
+      
+      else if (children[i].localName === 'x') {
+        for (var j = 0; j < children[i].childNodes.length; j++) {
+          var child = children[i].childNodes[j];
+          var field = {
+            type: child.getAttribute('type')
+          };
+
+          var _var = child.getAttribute('var');
+
+          var label = child.getAttribute('label');
+          if(label) field.label = label;
+
+          
+          for (var y = 0; y < child.childNodes.length; y++) {
+            if(child.childNodes[y].localName === 'desc')
+              field.desc = child.childNodes[y].textContent;
+            else if(child.childNodes[y].localName === 'required')
+              field.required = true;
+            else if(child.childNodes[y].localName === 'value')
+              field.value = child.childNodes[y].textContent;
+          }
+
+          
+          fields[_var] = field;
+        }
+      }
     }
 
-    aCallback({identities: identities, features: features});
+    aCallback({'identities': identities, 'features': features, 'fields': fields}, stanza);
   });
 };
