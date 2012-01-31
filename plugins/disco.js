@@ -19,105 +19,155 @@
 /////////
 //Disco//
 /////////
-Lightstring.NS['disco#info'] = "http://jabber.org/protocol/disco#info";
-Lightstring.NS['disco#items'] = "http://jabber.org/protocol/disco#items";
-Lightstring.stanza.disco = {
-  items: function(aTo, aNode) {
-    if(aTo)
-      var iq = "<iq type='get' to='"+aTo+"'>";
-    else
-      var iq = "<iq type='get'>";
-    
-    if(aNode)
-      var query = "<query xmlns='"+Lightstring.NS['disco#items']+"' node='"+aNode+"'/>";
-    else
-      var query = "<query xmlns='"+Lightstring.NS['disco#items']+"'/>";
-      
-    return iq+query+"</iq>";
+Lightstring.plugins['disco'] = {
+  namespaces: {
+    'disco#info': "http://jabber.org/protocol/disco#info",
+    'disco#items': "http://jabber.org/protocol/disco#items"
   },
-  info: function(aTo, aNode) {
-    if(aTo)
-      var iq = "<iq type='get' to='"+aTo+"'>";
-    else
-      var iq = "<iq type='get'>";
-    if(aNode)
-      var query = "<query xmlns='"+Lightstring.NS['disco#info']+"' node='"+aNode+"'/>";
-    else
-      var query = "<query xmlns='"+Lightstring.NS['disco#info']+"'/>";
-      
-    return iq+query+"</iq>";
-  }
-};
-Lightstring.discoItems = function(aConnection, aTo, aCallback) {
-  aConnection.send(Lightstring.stanza.disco.items(aTo), function(stanza){
-    var items = [];
-    var elms = stanza.DOM.querySelectorAll('item');
-    for(var i = 0; i < elms.length; i++) {
-      var node = elms[i];
-      var item = {
-        jid: node.getAttribute('jid'),
-        name: node.getAttribute('name'),
-        node: node.getAttribute('node')
+  stanzas: {
+    'disco#info': function(aTo, aNode) {
+      if(aTo)
+        var iq = "<iq type='get' to='"+aTo+"'>";
+      else
+        var iq = "<iq type='get'>";
+
+      if(aNode)
+        var query = "<query xmlns='"+Lightstring.NS['disco#items']+"' node='"+aNode+"'/>";
+      else
+        var query = "<query xmlns='"+Lightstring.NS['disco#items']+"'/>";
+
+      return iq+query+"</iq>";
+    },
+    'disco#info': function(aTo, aNode) {
+      if(aTo)
+        var iq = "<iq type='get' to='"+aTo+"'>";
+      else
+        var iq = "<iq type='get'>";
+      if(aNode)
+        var query = "<query xmlns='"+Lightstring.NS['disco#info']+"' node='"+aNode+"'/>";
+      else
+        var query = "<query xmlns='"+Lightstring.NS['disco#info']+"'/>";
+
+      return iq+query+"</iq>";
+    }
+  },
+  handlers: {
+    //TODO: fix that handler.
+    /*conn.on('iq/' + Lightstring.NS['disco#info'] + ':query', function(stanza) {
+      if (stanza.DOM.getAttributeNS(null, 'type') !== 'get')
+        return;
+
+      var query = stanza.DOM.firstChild;
+      if (query.getAttributeNS(null, 'node')) {
+        var response = "<iq to='" + stanza.DOM.getAttributeNS(null, 'from') + "'" +
+                          " id='" + stanza.DOM.getAttributeNS(null, 'id') + "'" +
+                          " type='error'/>"; //TODO: precise the error.
+        conn.send(response);
+        return;
       }
-      items.push(item);
-    };
-    if(aCallback)
-      aCallback(items);
-  });
-};
-Lightstring.discoInfo = function(aConnection, aTo, aNode, aCallback) {
-  aConnection.send(Lightstring.stanza.disco.info(aTo, aNode), function(stanza){
-    var identities = [];
-    var features = [];
-    var fields = {};
 
-    var children = stanza.DOM.firstChild.childNodes;
-    var length = children.length;
+      var features = [Lightstring.NS.sxe, Lightstring.NS.jingle.transports.sxe]; //TODO: put that elsewhere.
 
-    for (var i = 0; i < length; i++) {
+      var response = "<iq to='" + stanza.DOM.getAttributeNS(null, 'from') + "'" +
+                        " id='" + stanza.DOM.getAttributeNS(null, 'id') + "'" +
+                        " type='result'>" +
+                       "<query xmlns='" + Lightstring.NS['disco#info'] + "'>" +
+                         "<identity category='client' type='browser'/>";
+      features.forEach(function(f) {
+        response += "<feature var='" + f + "'/>";
+      });
+      response += "</query>" +
+                "</iq>";
 
-      if (children[i].localName === 'feature')
-        features.push(children[i].getAttributeNS(null, 'var'));
+      conn.send(response);
+    });*/
+  },
+  methods: {
+    discoItems: function(aTo, aResult, aError) {
+      this.send(Lightstring.stanzas.disco.items(aTo), function (stanza) {
+        var items = [];
 
-      else if (children[i].localName === 'identity') {
-        var identity = {
-          category: children[i].getAttributeNS(null, 'category'),
-          type: children[i].getAttributeNS(null, 'type')
-        };
-        var name = children[i].getAttributeNS(null, 'name');
-        if (name)
-          identity.name = name;
-        identities.push(identity);
-      }
-      
-      else if (children[i].localName === 'x') {
-        for (var j = 0; j < children[i].childNodes.length; j++) {
-          var child = children[i].childNodes[j];
-          var field = {
-            type: child.getAttribute('type')
+        var children = stanza.DOM.firstChild.childNodes;
+        var length = children.length;
+
+        for (var i = 0; i < length; i++) {
+          var node = children[i];
+          if (node.localName !== 'item')
+            continue;
+
+          var item = {
+            jid: node.getAttributeNS(null, 'jid'),
+            name: node.getAttributeNS(null, 'name'),
+            node: node.getAttributeNS(null, 'node')
           };
+          items.push(item);
+        }
 
-          var _var = child.getAttribute('var');
+        stanza.items = items;
 
-          var label = child.getAttribute('label');
-          if(label) field.label = label;
+        if (aResult)
+          aResult(stanza);
+      }, aError);
+    },
+    discoInfo: function(aTo, aNode, aResult, aError) {
+      this.send(Lightstring.stanzas.disco.info(aTo, aNode), function(stanza){
+        var identities = [];
+        var features = [];
+        var fields = {};
 
-          
-          for (var y = 0; y < child.childNodes.length; y++) {
-            if(child.childNodes[y].localName === 'desc')
-              field.desc = child.childNodes[y].textContent;
-            else if(child.childNodes[y].localName === 'required')
-              field.required = true;
-            else if(child.childNodes[y].localName === 'value')
-              field.value = child.childNodes[y].textContent;
+        var children = stanza.DOM.firstChild.childNodes;
+        var length = children.length;
+
+        for (var i = 0; i < length; i++) {
+
+          if (children[i].localName === 'feature')
+            features.push(children[i].getAttributeNS(null, 'var'));
+
+          else if (children[i].localName === 'identity') {
+            var identity = {
+              category: children[i].getAttributeNS(null, 'category'),
+              type: children[i].getAttributeNS(null, 'type')
+            };
+            var name = children[i].getAttributeNS(null, 'name');
+            if (name)
+              identity.name = name;
+            identities.push(identity);
           }
 
-          
-          fields[_var] = field;
-        }
-      }
-    }
+          else if (children[i].localName === 'x') {
+            for (var j = 0; j < children[i].childNodes.length; j++) {
+              var child = children[i].childNodes[j];
+              var field = {
+                type: child.getAttribute('type')
+              };
 
-    aCallback({'identities': identities, 'features': features, 'fields': fields}, stanza);
-  });
+              var _var = child.getAttribute('var');
+
+              var label = child.getAttribute('label');
+              if (label)
+                field.label = label;
+
+              for (var y = 0; y < child.childNodes.length; y++) {
+                if(child.childNodes[y].localName === 'desc')
+                  field.desc = child.childNodes[y].textContent;
+                else if(child.childNodes[y].localName === 'required')
+                  field.required = true;
+                else if(child.childNodes[y].localName === 'value')
+                  field.value = child.childNodes[y].textContent;
+              }
+
+              fields[_var] = field;
+            }
+          }
+        }
+
+        stanza.identities = identities;
+        stanza.features = features;
+        stanza.fields = fields;
+
+        if (aResult)
+          aResult(stanza);
+      }, aError);
+    }
+  }
 };
