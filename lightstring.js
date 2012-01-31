@@ -334,16 +334,21 @@ Lightstring.Connection.prototype = {
       return;
 
     if (stanza.DOM.tagName === 'iq') {
-      var id = stanza.DOM.getAttribute('id');
-      //TODO: This should be done by a plugin
-      if (!id)
-        stanza.DOM.setAttribute('id', Lightstring.newId('sendiq:'));
-      if (aCallback)
-        this.on(stanza.DOM.getAttribute('id'), aCallback);
+      var type = stanza.DOM.getAttributeNS(null, 'type');
+      if (type !== 'get' || type !== 'set')
+        ; //TODO: emit an error.
+
+      var id = stanza.DOM.getAttributeNS(null, 'id');
+      if (!id) {
+        if (aCallback)
+          ; //TODO: emit an error.
+        else
+          ; //TODO: emit an warning.
+      } else if (aCallback)
+        this.on(id, aCallback);
     }
-    else if (aCallback) {
-      this.emit('warning', 'Callback can\'t be called with non-iq stanza.');
-    }
+    else if (aCallback)
+      ; //TODO: callback can’t be called with non-iq stanza.
 
 
     //TODO this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
