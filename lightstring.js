@@ -266,11 +266,14 @@ Lightstring.Connection.prototype = {
       throw 'Lightstring: Connection.service is undefined.';
 
     //"Bug 695635 - tracking bug: unprefix WebSockets" https://bugzil.la/695635
-    try {
+    if(typeof(MozWebSocket) == "function") {
+      this.socket = new MozWebSocket(this.service, 'xmpp');
+    }
+    else if(typeof(WebSocket) == "function") {
       this.socket = new WebSocket(this.service, 'xmpp');
     }
-    catch (error) {
-      this.socket = new MozWebSocket(this.service, 'xmpp');
+    else {
+      throw new Error('WebSocket not available.');
     }
 
     var that = this;
