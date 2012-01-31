@@ -24,20 +24,20 @@ var Lightstring = {
   /**
    * @namespace Holds XMPP namespaces.
    */
-  NS: {
+  ns: {
     stream: 'http://etherx.jabber.org/streams',
     jabberClient: 'jabber:client'
   },
   /**
    * @namespace Holds XMPP stanza builders.
    */
-  stanza: {
+  stanzas: {
     stream: {
       open: function(aService) {
         //FIXME no ending "/" - node-xmpp-bosh bug
         return "<stream:stream to='" + aService + "'" +
-                             " xmlns='" + Lightstring.NS.jabberClient + "'" +
-                             " xmlns:stream='" + Lightstring.NS.stream + "'" +
+                             " xmlns='" + Lightstring.ns.jabberClient + "'" +
+                             " xmlns:stream='" + Lightstring.ns.stream + "'" +
                              " version='1.0'/>";
       },
       close: function() {
@@ -45,6 +45,7 @@ var Lightstring = {
       }
     }
   },
+  plugins: {},
   /**
    * @private
    */
@@ -279,7 +280,7 @@ Lightstring.Connection.prototype = {
     this.socket.addEventListener('open', function() {
       //TODO: if (this.protocol !== 'xmpp')
 
-      var stream = Lightstring.stanza.stream.open(that.jid.domain);
+      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
       //TODO: Use Lightstring.Connection.send (problem with parsing steam);
       that.socket.send(stream);
       var stanza = {
@@ -376,10 +377,31 @@ Lightstring.Connection.prototype = {
    */
   disconnect: function() {
     this.emit('disconnecting');
-    var stream = Lightstring.stanza.stream.close();
+    var stream = Lightstring.stanzas.stream.close();
     this.send(stream);
     this.emit('XMLOutput', stream);
     this.socket.close();
+  },
+  load: function() {
+    for (var i = 0; i < arguments.length; i++) {
+      var name = arguments[i];
+      if (!(name in Lightstring.plugins))
+        continue; //TODO: throw an error?
+
+      var plugin = Lightstring.plugins[name];
+
+      for (var ns in plugin.namespaces)
+        Lightstring.ns[ns] = plugin.namespaces[ns];
+
+      for (var stanza in plugin.stanzas)
+        Lightstring.stanzas[stanza] = plugin.stanzas[stanza];
+
+      for (var handler in plugin.handlers)
+        this.on(handler, plugin.handlers[handler]);
+
+      for (var method in plugin.methods)
+        this.methods[method] = plugin.methods[method];
+    }
   },
   /**
    * @function Emits an event.
