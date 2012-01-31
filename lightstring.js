@@ -111,11 +111,11 @@ Lightstring.Connection = function(aService) {
   if (aService)
     this.service = aService;
   this.handlers = {};
-  this.on('stream:features', function(stanza, that) {
+  this.on('stream:features', function(stanza) {
     var nodes = stanza.DOM.querySelectorAll('mechanism');
     //SASL/Auth features
     if (nodes.length > 0) {
-      that.emit('mechanisms', stanza);
+      this.emit('mechanisms', stanza);
       var mechanisms = {};
       for (var i = 0; i < nodes.length; i++)
         mechanisms[nodes[i].textContent] = true;
@@ -123,19 +123,19 @@ Lightstring.Connection = function(aService) {
 
       //FIXME support SCRAM-SHA1 && allow specify method preferences
       if ('DIGEST-MD5' in mechanisms)
-        that.send(
+        this.send(
           "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
                " mechanism='DIGEST-MD5'/>"
         );
       else if ('PLAIN' in mechanisms) {
         var token = btoa(
-          that.jid +
+          this.jid +
           '\u0000' +
-          that.jid.node +
+          this.jid.node +
           '\u0000' +
-          that.password
+          this.password
         );
-        that.send(
+        this.send(
           "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
                " mechanism='PLAIN'>" + token + "</auth>"
         );
@@ -143,44 +143,44 @@ Lightstring.Connection = function(aService) {
     }
     //XMPP features
     else {
-      that.emit('features', stanza);
+      this.emit('features', stanza);
       //Bind http://xmpp.org/rfcs/rfc3920.html#bind
       var bind =
         "<iq type='set' xmlns='jabber:client'>" +
           "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
-            (that.jid.resource? "<resource>" + that.jid.resource + "</resource>": "") +
+            (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
           "</bind>" +
         "</iq>";
 
-      that.send(
+      this.send(
         bind,
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          that.jid = new Lightstring.JID(stanza.DOM.textContent);
-          that.send(
+          this.jid = new Lightstring.JID(stanza.DOM.textContent);
+          this.send(
             "<iq type='set' xmlns='jabber:client'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
             "</iq>",
             function() {
-              that.emit('connected');
+              this.emit('connected');
             }
           );
         }
       );
     }
   });
-  this.on('success', function(stanza, that) {
-    that.send(
-      "<stream:stream to='" + that.jid.domain + "'" +
+  this.on('success', function(stanza) {
+    this.send(
+      "<stream:stream to='" + this.jid.domain + "'" +
                     " xmlns='jabber:client'" +
                     " xmlns:stream='http://etherx.jabber.org/streams'" +
                     " version='1.0'/>"
     );
   });
-  this.on('failure', function(stanza, that) {
-    that.emit('conn-error', stanza.DOM.firstChild.tagName);
+  this.on('failure', function(stanza) {
+    this.emit('conn-error', stanza.DOM.firstChild.tagName);
   });
-  this.on('challenge', function(stanza, that) {
+  this.on('challenge', function(stanza) {
     //FIXME this is mostly Strophe code
 
     function _quote(str) {
@@ -218,16 +218,16 @@ Lightstring.Connection = function(aService) {
       }
     }
 
-    var digest_uri = 'xmpp/' + that.jid.domain;
+    var digest_uri = 'xmpp/' + this.jid.domain;
     if (host !== null)
         digest_uri = digest_uri + '/' + host;
-    var A1 = MD5.hash(that.jid.node +
-                      ':' + realm + ':' + that.password) +
+    var A1 = MD5.hash(this.jid.node +
+                      ':' + realm + ':' + this.password) +
                       ':' + nonce + ':' + cnonce;
     var A2 = 'AUTHENTICATE:' + digest_uri;
 
     var responseText = '';
-    responseText += 'username=' + _quote(that.jid.node) + ',';
+    responseText += 'username=' + _quote(this.jid.node) + ',';
     responseText += 'realm=' + _quote(realm) + ',';
     responseText += 'nonce=' + _quote(nonce) + ',';
     responseText += 'cnonce=' + _quote(cnonce) + ',';
@@ -240,7 +240,7 @@ Lightstring.Connection = function(aService) {
                       cnonce + ':auth:' +
                       MD5.hexdigest(A2))) + ',';
     responseText += 'charset="utf-8"';
-    that.send(
+    this.send(
       "<response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>" +
         btoa(responseText) +
       "</response>");
@@ -310,6 +310,12 @@ Lightstring.Connection.prototype = {
         if (payload)
           that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
         that.emit(stanza.DOM.getAttribute('id'), stanza); //FIXME: possible attack vector.
+
+      //TODO: really needed?
+      } else if (stanza.DOM.tagName === 'message') {
+        var payloads = stanza.DOM.children;
+        for (var i = 0; i < payloads.length; i++)
+          that.emit('message/' + payloads[i].namespaceURI + ':' + payloads[i].localName, stanza);
       }
     });
   },
@@ -366,9 +372,8 @@ Lightstring.Connection.prototype = {
     if (!handlers)
       return;
 
-    //FIXME Better idea than passing the context as argument?
     for (var i = 0; i < handlers.length; i++)
-      handlers[i](aData, this);
+      handlers[i].call(this, aData);
 
     if (aName.match('sendiq:'))
       delete this.handlers[aName];
