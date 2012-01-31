@@ -16,36 +16,38 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-Lightstring.NS.xmpp_stanzas = 'urn:ietf:params:xml:ns:xmpp-stanzas';
+Lightstring.plugins['feature-not-implemented'] = {
+  namespaces: {
+    xmpp_stanzas: 'urn:ietf:params:xml:ns:xmpp-stanzas'
+  },
+  handlers: {
+    'iq': function callback(stanza) {
+      var type = stanza.DOM.getAttributeNS(null, 'type');
+      if (type !== 'get' && type !== 'set')
+        return;
 
-function register_feature_not_implemented() {
-  var conn = this;
-  conn.on('iq', function callback(stanza) {
-    var type = stanza.DOM.getAttributeNS(null, 'type');
-    if (type !== 'get' && type !== 'set')
-      return;
+      var handlers = conn.handlers;
+      var events = [handlers['iq']];
 
-    var handlers = conn.handlers;
-    var events = [handlers['iq']];
+      var payload = stanza.DOM.firstChild;
+      if (payload)
+        events.push('iq/' + payload.namespaceURI + ':' + payload.localName);
 
-    var payload = stanza.DOM.firstChild;
-    if (payload)
-      events.push('iq/' + payload.namespaceURI + ':' + payload.localName);
+      var only = events.every(function(handler) {
+        for (var i in handler)
+          if (callback !== handler[i])
+            return false;
+        return true;
+      });
 
-    var only = events.every(function(handler) {
-      for (var i in handler)
-        if (callback !== handler[i])
-          return false;
-      return true;
-    });
-
-    if (only)
-      conn.send("<iq to='" + stanza.DOM.getAttributeNS(null, 'from') + "'" +
-                   " id='" + stanza.DOM.getAttributeNS(null, 'id') + "'" +
-                   " type='error'>" +
-                  "<error type='cancel'>" +
-                    "<feature-not-implemented xmlns='" + Lightstring.NS.xmpp_stanzas + "'/>" +
-                  "</error>" +
-                "</iq>");
-  });
+      if (only)
+        conn.send("<iq to='" + stanza.DOM.getAttributeNS(null, 'from') + "'" +
+                     " id='" + stanza.DOM.getAttributeNS(null, 'id') + "'" +
+                     " type='error'>" +
+                    "<error type='cancel'>" +
+                      "<feature-not-implemented xmlns='" + Lightstring.NS.xmpp_stanzas + "'/>" +
+                    "</error>" +
+                  "</iq>");
+    }
+  }
 };
