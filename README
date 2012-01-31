@@ -16,8 +16,9 @@ References
     http://xmpp.org/xmpp-protocols/xmpp-extensions/
   WebSocket:
     http://dev.w3.org/html5/websockets/
+    http://tools.ietf.org/html/rfc6455
   XMPP over WebSocket:
-    https://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00
+    http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00
     http://blog.superfeedr.com/xmpp-over-websockets/
 
 Similar/related software
