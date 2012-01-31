@@ -309,7 +309,22 @@ Lightstring.Connection.prototype = {
         var payload = stanza.DOM.firstChild;
         if (payload)
           that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
-        that.emit(stanza.DOM.getAttribute('id'), stanza); //FIXME: possible attack vector.
+
+        var id = stanza.DOM.getAttributeNS(null, 'id');
+        if (!(id && id in that.callbacks))
+          return;
+
+        var type = stanza.DOM.getAttributeNS(null, 'type');
+        if (type !== 'result' || type !== 'error')
+          return; //TODO: emit an warning, perhaps.
+
+        var callback = that.callbacks[id];
+        if (type === 'result' && callback.result)
+          callback.result(stanza);
+        else if (type === 'error' && callback.error)
+          callback.error(stanza);
+
+        delete that.callbacks[id];
 
       //TODO: really needed?
       } else if (stanza.DOM.tagName === 'message') {
@@ -324,7 +339,7 @@ Lightstring.Connection.prototype = {
    * @param {String|Object} aStanza The message to send.
    * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
    */
-  send: function(aStanza, aCallback) {
+  send: function(aStanza, aResult, aError) {
     if (!(aStanza instanceof Lightstring.Stanza))
       var stanza = new Lightstring.Stanza(aStanza);
     else
@@ -338,16 +353,15 @@ Lightstring.Connection.prototype = {
       if (type !== 'get' || type !== 'set')
         ; //TODO: emit an error.
 
+      var callback = {result: aResult, error: aError};
+
       var id = stanza.DOM.getAttributeNS(null, 'id');
-      if (!id) {
-        if (aCallback)
-          ; //TODO: emit an error.
-        else
-          ; //TODO: emit an warning.
-      } else if (aCallback)
-        this.on(id, aCallback);
-    }
-    else if (aCallback)
+      if (!id)
+        ; //TODO: emit an warning.
+      else
+        this.callback[id] = callback;
+
+    } else if (aResult || aError)
       ; //TODO: callback can’t be called with non-iq stanza.
 
 
@@ -379,9 +393,6 @@ Lightstring.Connection.prototype = {
 
     for (var i = 0; i < handlers.length; i++)
       handlers[i].call(this, aData);
-
-    if (aName.match('sendiq:'))
-      delete this.handlers[aName];
   },
   /**
    * @function Register an event handler.
@@ -393,10 +404,4 @@ Lightstring.Connection.prototype = {
       this.handlers[aName] = [];
     this.handlers[aName].push(callback);
   }
-  //FIXME do this!
-  //~ this.once = function(name, callback) {
-    //~ if(!this.handlers[name])
-      //~ this.handlers[name] = [];
-    //~ this.handlers[name].push(callback);
-  //~ };
 };
