@@ -19,12 +19,13 @@
 //////
 //IM//
 //////
-Lightstring.stanza.message = {
-  normal: function(aTo, aSubject, aText) {
-    return "<message type='normal' to='"+aTo+"'><subject>"+aSubject+"</subject><body>"+aText+"</body></message>";
-  },
-  chat: function(aTo, aText) {
-    return "<message type='chat' to='"+aTo+"'><body>"+aText+"</body></message>";
+Lightstring.plugins['message'] = {
+  stanzas: {
+    normalMessage: function(aTo, aSubject, aText) {
+      return "<message type='normal' to='" + aTo + "'><subject>" + aSubject + "</subject><body>" + aText + "</body></message>";
+    },
+    chatMessage: function(aTo, aText) {
+      return "<message type='chat' to='" + aTo + "'><body>" + aText + "</body></message>";
+    }
   }
 };
-
