@@ -16,6 +16,18 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+/*
+References:
+  Extensible Messaging and Presence Protocol (XMPP): Core - SASL Negotiation
+      http://xmpp.org/rfcs/rfc6120.html#sasl
+  Simple Authentication and Security Layer (SASL)
+      http://tools.ietf.org/html/rfc4422
+  HTTP Authentication: Basic and Digest Access Authentication
+      http://tools.ietf.org/html/rfc2617
+  Using Digest Authentication as a SASL Mechanism
+    http://tools.ietf.org/html/rfc2831
+*/
+
 Lightstring.plugins['DIGEST-MD5'] = {
   handlers: {
     'mechanisms': function (stanza) {

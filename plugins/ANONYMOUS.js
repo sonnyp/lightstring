@@ -16,6 +16,18 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+/*
+References:
+  Extensible Messaging and Presence Protocol (XMPP): Core - SASL Negotiation
+      http://xmpp.org/rfcs/rfc6120.html#sasl
+  Simple Authentication and Security Layer (SASL)
+      http://tools.ietf.org/html/rfc4422
+  Anonymous Simple Authentication and Security Layer (SASL) Mechanism
+      http://tools.ietf.org/html/rfc4505
+  Best Practices for Use of SASL ANONYMOUS
+      http://xmpp.org/extensions/xep-0175.html
+*/
+
 Lightstring.plugins['ANONYMOUS'] = {
   handlers: {
     'mechanisms': function (stanza) {
