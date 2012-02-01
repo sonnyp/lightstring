@@ -35,7 +35,7 @@ var Lightstring = {
   stanzas: {
     stream: {
       open: function(aService) {
-        //FIXME no ending "/" - node-xmpp-bosh bug
+        //WORKAROUND: no ending "/" - node-xmpp-bosh bug
         return "<stream:stream to='" + aService + "'" +
                              " xmlns='" + Lightstring.ns['jabber_client'] + "'" +
                              " xmlns:stream='" + Lightstring.ns['streams'] + "'" +
@@ -58,6 +58,9 @@ var Lightstring = {
       }
     }
   },
+  /**
+   * @namespace Holds Lightstring plugins
+   */
   plugins: {},
   /**
    * @private
@@ -78,7 +81,7 @@ var Lightstring = {
       DOM = this.parser.parseFromString(aString, 'text/xml').documentElement;
     }
     catch (e) {
-      alert(e);
+      //TODO: error
     }
     finally {
       return DOM;
@@ -95,7 +98,7 @@ var Lightstring = {
       XML = this.serializer.serializeToString(aElement);
     }
     catch (e) {
-      //TODO throw error
+      //TODO: error
     }
     finally {
       return XML;
@@ -124,7 +127,13 @@ var Lightstring = {
 Lightstring.Connection = function(aService) {
   if (aService)
     this.service = aService;
+  /**
+   * @namespace Holds connection events handlers
+   */
   this.handlers = {};
+  /**
+   * @namespace Holds connection iq callbacks
+   */
   this.callbacks = {};
 };
 Lightstring.Connection.prototype = {
@@ -140,9 +149,9 @@ Lightstring.Connection.prototype = {
       this.password = aPassword;
 
     if (!this.jid.bare)
-      throw 'Lightstring: Connection.jid is undefined.';
+      return; //TODO: error
     if (!this.service)
-      throw 'Lightstring: Connection.service is undefined.';
+      return; //TODO: error
 
     if(typeof(WebSocket) === "function") {
       this.socket = new WebSocket(this.service, 'xmpp');
@@ -151,39 +160,41 @@ Lightstring.Connection.prototype = {
       this.socket = new MozWebSocket(this.service, 'xmpp');
     }
     else {
-      throw new Error('WebSocket not available.');
+      return; //TODO: error
     }
 
-    var that = this;
+    var Conn = this;
     this.socket.addEventListener('open', function() {
-      //TODO: if (this.protocol !== 'xmpp')
+      if (this.protocol !== 'xmpp')
+        return; //TODO: error
 
-      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
-      //TODO: Use Lightstring.Connection.send (problem with parsing steam);
-      that.socket.send(stream);
+      var stream = Lightstring.stanzas.stream.open(Conn.jid.domain);
+      //FIXME: Use Lightstring.Connection.send (problem with parsing steam);
+      Conn.socket.send(stream);
       var stanza = {
         XML: stream
       };
-      that.emit('output', stanza);
+      Conn.emit('output', stanza);
     });
     this.socket.addEventListener('error', function(e) {
-      that.emit('error', e.data);
-      console.log(e.data);
+      Conn.emit('disconnecting', e.data);
+      //TODO: error
     });
     this.socket.addEventListener('close', function(e) {
-      that.emit('disconnected', e.data);
+      Conn.emit('disconnected', e.data);
     });
     this.socket.addEventListener('message', function(e) {
       var stanza = new Lightstring.Stanza(e.data);
 
-      //TODO node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
-      that.emit('input', stanza);
+      //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
+      Conn.emit('input', stanza);
 
       if(!stanza.DOM)
         return;
 
-
       var name = stanza.DOM.localName;
+
+      //Authentication
       //FIXME SASL mechanisms and XMPP features can be both in a stream:features
       if (name === 'features') {
         //SASL mechanisms
@@ -192,55 +203,45 @@ Lightstring.Connection.prototype = {
           var nodes = stanza.DOM.querySelectorAll('mechanism');
           for (var i = 0; i < nodes.length; i++)
             stanza.mechanisms.push(nodes[i].textContent);
-          that.emit('mechanisms', stanza);
+          Conn.emit('mechanisms', stanza);
         }
         //XMPP features
         else {
           //TODO: stanza.features
-          that.emit('features', stanza);
+          Conn.emit('features', stanza);
         }
       }
       else if (name === 'challenge') {
-        that.emit('challenge', stanza);
-      }
-      else if (name === 'response') {
-
-
+        Conn.emit('challenge', stanza);
       }
       else if (name === 'failure') {
-        that.emit('failure', stanza);
+        Conn.emit('failure', stanza);
       }
       else if (name === 'success') {
-        that.emit('success', stanza);
+        Conn.emit('success', stanza);
       }
-      else if(name === 'stream') {
-
-
-      }
-
-
 
       //Iq callbacks
       else if (name === 'iq') {
         var payload = stanza.DOM.firstChild;
         if (payload)
-          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
+          Conn.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
 
         var id = stanza.DOM.getAttributeNS(null, 'id');
-        if (!(id && id in that.callbacks))
+        if (!(id && id in Conn.callbacks))
           return;
 
         var type = stanza.DOM.getAttributeNS(null, 'type');
         if (type !== 'result' && type !== 'error')
-          return; //TODO: emit an warning, perhaps.
+          return; //TODO: warning
 
-        var callback = that.callbacks[id];
+        var callback = Conn.callbacks[id];
         if (type === 'result' && callback.success)
           callback.success(stanza);
         else if (type === 'error' && callback.error)
           callback.error(stanza);
 
-        delete that.callbacks[id];
+        delete Conn.callbacks[id];
       }
     });
   },
@@ -261,21 +262,21 @@ Lightstring.Connection.prototype = {
     if (stanza.DOM.tagName === 'iq') {
       var type = stanza.DOM.getAttributeNS(null, 'type');
       if (type !== 'get' || type !== 'set')
-        ; //TODO: emit an error.
+        ; //TODO: error
 
       var callback = {success: aSuccess, error: aError};
 
       var id = stanza.DOM.getAttributeNS(null, 'id');
       if (!id)
-        ; //TODO: emit an warning.
+        ; //TODO: warning
       else
         this.callbacks[id] = callback;
 
     } else if (aSuccess || aError)
-      ; //TODO: callback can’t be called with non-iq stanza.
+      ; //TODO: warning (no callback without iq)
 
 
-    //TODO this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
+    //FIXME this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
     var fixme = Lightstring.DOM2XML(stanza.DOM);
     stanza.XML = fixme;
     this.socket.send(fixme);
@@ -295,7 +296,7 @@ Lightstring.Connection.prototype = {
     for (var i = 0; i < arguments.length; i++) {
       var name = arguments[i];
       if (!(name in Lightstring.plugins))
-        continue; //TODO: throw an error?
+        continue; //TODO: error
 
       var plugin = Lightstring.plugins[name];
 
@@ -342,7 +343,7 @@ Lightstring.Connection.prototype = {
     for (var i = 0; i < handlers.length; i++) {
       ret = handlers[i].call(this, aData);
       if (typeof ret !== 'boolean')
-        return; //TODO: emit a big error!
+        return; //TODO: error
 
       if (ret)
         return;
