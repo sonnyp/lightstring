@@ -17,9 +17,6 @@
 */
 
 
-/**
- * @namespace No code from lightstring should be callable outside this namespace/scope.
- */
 var Lightstring = {
   /**
    * @namespace Holds XMPP namespaces.

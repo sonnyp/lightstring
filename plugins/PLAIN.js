@@ -53,7 +53,7 @@ Lightstring.plugins['PLAIN'] = {
       );
     },
     'features': function (stanza) {
-      var that = this;
+      var Conn = this;
       //TODO check if bind supported
       var bind =
         "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
@@ -66,13 +66,13 @@ Lightstring.plugins['PLAIN'] = {
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          that.jid = new Lightstring.JID(stanza.DOM.textContent);
-          that.send(
+          Conn.jid = new Lightstring.JID(stanza.DOM.textContent);
+          Conn.send(
             "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
             "</iq>",
             function() {
-              that.emit('connected');
+              Conn.emit('connected');
             }
           );
         },
