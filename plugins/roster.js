@@ -19,50 +19,71 @@
 //////////
 //Roster//
 //////////
-Lightstring.NS.roster = 'jabber:iq:roster';
-Lightstring.stanza.roster = {
-  'get': function() {
-    return "<iq type='get'><query xmlns='"+Lightstring.NS.roster+"'/></iq>";
+Lightstring.plugins['roster'] = {
+  namespaces: {
+    roster: 'jabber:iq:roster'
   },
-  add: function(aAddress, aGroups, aCustomName) {
-    var iq = $iq({type: 'set'}).c('query', {xmlns: Lightstring.NS.roster}).c('item', {jid: aAddress}).tree();
-    if(aCustomName) iq.querySelector('item').setAttribute(aCustomName);
-    for (var i=0; i<aGroups.length; i++) {
-      if(i === 0) iq.querySelector('item').appendChild(document.createElement('group'));
-      iq.querySelector('group').appendChild(document.createElement(aGroups[i]));
+  stanzas: {
+    get: function() {
+      return "<iq type='get'>" +
+               "<query xmlns='" + Lightstring.NS.roster + "'/>" +
+             "</iq>";
+    },
+    add: function(aAddress, aGroups) {
+      var iq = "<iq type='set'>" +
+                 "<query xmlns='" + Lightstring.NS.roster + "'>" +
+                   "<item jid='" + aAddress + "'/>" +
+                 "</query>" +
+               "</iq>";
+      for (var i = 0; i < aGroups.length; i++) {
+        if (i === 0)
+          iq.querySelector('item').appendChild(document.createElement('group'));
+        iq.querySelector('group').appendChild(document.createElement(aGroups[i]));
+      }
+      return iq;
+    },
+    remove: function(aAddress) {
+      return "<iq type='set'>" +
+               "<query xmlns='" + Lightstring.NS.roster + "'>" +
+                 "<item jid='" + aAddress + "' subscription='remove'/>" +
+               "</query>" +
+             "</iq>";
     }
-    return iq;
   },
-  remove: function(aAddress) {
-    return $iq({type: 'set'}).c('query', {xmlns: Lightstring.NS.roster}).c('item', {jid: aAddress, subscription: 'remove'}).tree();
+  methods: {
+    get: function(aResult, aError) {
+      this.send(this.stanza.roster.get(), function(stanza) {
+        var contacts = [];
+
+        var children = stanza.DOM.firstChild.childNodes;
+        var length = children.length;
+
+        for (var i = 0; i < length; i++) {
+          var item = children[i];
+          var jid = item.getAttributeNS(null, 'jid');
+          var name = item.getAttributeNS(null, 'name');
+          var subscription = item.getAttributeNS(null, 'subscription');
+          var groups = item.children;
+          var contact = {};
+          if (name)
+            contact.name = name;
+          if (jid)
+            contact.jid = jid;
+          if (subscription)
+            contact.subscription = subscription;
+          if (groups.length > 0) {
+            contact.groups = [];
+            groups.forEach(function(group) {
+              contact.groups.push(group.textContent);
+            });
+          }
+
+          contacts.push(contact);
+        }
+
+        if (aResult)
+          aResult(contacts);
+      }, aError);
+    }
   }
 };
-Lightstring.getRoster = function(connection, aCallback) {
-  connection.send(this.stanza.roster.get(), function(stanza){
-    var contacts = [];
-    var elems = stanza.DOM.querySelectorAll('item');
-    for(var i = 0; i<elms.length; i++) {
-      var item = elms[i];
-      var jid = item.getAttribute('jid');
-      var name = item.getAttribute('name');
-      var groups = item.querySelectorAll('group');
-      var subscription = item.getAttribute('subscription');
-      var contact = {};
-      if(name)
-        contact.name = name;
-      if(jid)
-        contact.jid = jid;
-      if(subscription)
-        contact.subscription = subscription;
-      if(groups.length > 0) {
-        contact.groups = [];
-        groups.forEach(function(group) {
-          contact.groups.push(group.textContent);
-        });
-      }
-
-      contacts.push(contact);
-    };
-    aCallback(contacts);
-  });
-}
