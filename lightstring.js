@@ -113,6 +113,7 @@ Lightstring.Connection = function(aService) {
   if (aService)
     this.service = aService;
   this.handlers = {};
+  this.callbacks = {};
   this.on('stream:features', function(stanza) {
     var nodes = stanza.DOM.querySelectorAll('mechanism');
     //SASL/Auth features
@@ -146,27 +147,33 @@ Lightstring.Connection = function(aService) {
     //XMPP features
     else {
       this.emit('features', stanza);
+      var that = this;
       //Bind http://xmpp.org/rfcs/rfc3920.html#bind
       var bind =
-        "<iq type='set' xmlns='jabber:client'>" +
+        "<iq type='set' id='"+Lightstring.newId('sendiq:')+"' xmlns='jabber:client'>" +
           "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
             (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
           "</bind>" +
         "</iq>";
-
       this.send(
         bind,
+        //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
+          alert('iq callback!!!');
           this.jid = new Lightstring.JID(stanza.DOM.textContent);
-          this.send(
-            "<iq type='set' xmlns='jabber:client'>" +
+          that.send(
+            "<iq type='set' id='"+Lightstring.newId('sendiq:')+"' xmlns='jabber:client'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
             "</iq>",
             function() {
-              this.emit('connected');
+              that.emit('connected');
             }
           );
+        },
+        //Error
+        function(stanza) {
+          //TODO: Error?
         }
       );
     }
@@ -317,12 +324,12 @@ Lightstring.Connection.prototype = {
           return;
 
         var type = stanza.DOM.getAttributeNS(null, 'type');
-        if (type !== 'result' || type !== 'error')
+        if (type !== 'result' && type !== 'error')
           return; //TODO: emit an warning, perhaps.
 
         var callback = that.callbacks[id];
-        if (type === 'result' && callback.result)
-          callback.result(stanza);
+        if (type === 'result' && callback.success)
+          callback.success(stanza);
         else if (type === 'error' && callback.error)
           callback.error(stanza);
 
@@ -341,7 +348,7 @@ Lightstring.Connection.prototype = {
    * @param {String|Object} aStanza The message to send.
    * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
    */
-  send: function(aStanza, aResult, aError) {
+  send: function(aStanza, aSuccess, aError) {
     if (!(aStanza instanceof Lightstring.Stanza))
       var stanza = new Lightstring.Stanza(aStanza);
     else
@@ -355,15 +362,15 @@ Lightstring.Connection.prototype = {
       if (type !== 'get' || type !== 'set')
         ; //TODO: emit an error.
 
-      var callback = {result: aResult, error: aError};
+      var callback = {success: aSuccess, error: aError};
 
       var id = stanza.DOM.getAttributeNS(null, 'id');
       if (!id)
         ; //TODO: emit an warning.
       else
-        this.callback[id] = callback;
+        this.callbacks[id] = callback;
 
-    } else if (aResult || aError)
+    } else if (aSuccess || aError)
       ; //TODO: callback can’t be called with non-iq stanza.
 
 
