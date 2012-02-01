@@ -119,46 +119,29 @@ Lightstring.plugins['disco'] = {
         var length = children.length;
 
         for (var i = 0; i < length; i++) {
+          var child = children[i];
+          var ns = child.namespaceURI;
+          var name = child.localName;
 
-          if (children[i].localName === 'feature')
-            features.push(children[i].getAttributeNS(null, 'var'));
+          if (ns === Lightstring.namespaces['disco#info'] && name === 'feature')
+            features.push(child.getAttributeNS(null, 'var'));
 
-          else if (children[i].localName === 'identity') {
+          else if (ns === Lightstring.namespaces['disco#info'] && name === 'identity') {
             var identity = {
-              category: children[i].getAttributeNS(null, 'category'),
-              type: children[i].getAttributeNS(null, 'type')
+              category: child.getAttributeNS(null, 'category'),
+              type: child.getAttributeNS(null, 'type')
             };
-            var name = children[i].getAttributeNS(null, 'name');
+            var name = child.getAttributeNS(null, 'name');
             if (name)
               identity.name = name;
             identities.push(identity);
           }
 
-          else if (children[i].localName === 'x') {
-            for (var j = 0; j < children[i].childNodes.length; j++) {
-              var child = children[i].childNodes[j];
-              var field = {
-                type: child.getAttribute('type')
-              };
+          else if (ns === Lightstring.namespaces['dataforms'] && name === 'x')
+            this.disco.parse(child); //TODO: check if that plugin is enabled.
 
-              var _var = child.getAttribute('var');
-
-              var label = child.getAttribute('label');
-              if (label)
-                field.label = label;
-
-              for (var y = 0; y < child.childNodes.length; y++) {
-                if(child.childNodes[y].localName === 'desc')
-                  field.desc = child.childNodes[y].textContent;
-                else if(child.childNodes[y].localName === 'required')
-                  field.required = true;
-                else if(child.childNodes[y].localName === 'value')
-                  field.value = child.childNodes[y].textContent;
-              }
-
-              fields[_var] = field;
-            }
-          }
+          else
+            ; //TODO: emit a warning.
         }
 
         stanza.identities = identities;
