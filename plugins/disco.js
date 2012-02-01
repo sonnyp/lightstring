@@ -25,7 +25,7 @@ Lightstring.plugins['disco'] = {
     'disco#items': "http://jabber.org/protocol/disco#items"
   },
   stanzas: {
-    'disco#info': function(aTo, aNode) {
+    'disco#items': function(aTo, aNode) {
       if(aTo)
         var iq = "<iq type='get' to='"+aTo+"'>";
       else

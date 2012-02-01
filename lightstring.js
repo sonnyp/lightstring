@@ -38,7 +38,7 @@ var Lightstring = {
         //FIXME no ending "/" - node-xmpp-bosh bug
         return "<stream:stream to='" + aService + "'" +
                              " xmlns='" + Lightstring.ns['jabber_client'] + "'" +
-                             " xmlns:stream='" + Lightstring.ns.['streams'] + "'" +
+                             " xmlns:stream='" + Lightstring.ns['streams'] + "'" +
                              " version='1.0'/>";
       },
       close: function() {
