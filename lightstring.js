@@ -394,14 +394,17 @@ Lightstring.Connection.prototype = {
       for (var ns in plugin.namespaces)
         Lightstring.ns[ns] = plugin.namespaces[ns];
 
+      Lightstring.stanzas[name] = {};
       for (var stanza in plugin.stanzas)
         Lightstring.stanzas[name][stanza] = plugin.stanzas[stanza];
 
       for (var handler in plugin.handlers)
         this.on(handler, plugin.handlers[handler]);
 
-      for (var method in plugin.methods)
-        this[name][method] = plugin.methods[method];
+      this[name] = plugin.methods;
+
+      if (plugin.init)
+        plugin.init();
     }
   },
   /**
