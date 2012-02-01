@@ -23,10 +23,11 @@
 var Lightstring = {
   /**
    * @namespace Holds XMPP namespaces.
+   * @description http://xmpp.org/xmpp-protocols/protocol-namespaces
    */
   ns: {
-    stream: 'http://etherx.jabber.org/streams',
-    jabberClient: 'jabber:client'
+    streams: 'http://etherx.jabber.org/streams',
+    jabber_client: 'jabber:client'
   },
   /**
    * @namespace Holds XMPP stanza builders.
@@ -36,8 +37,8 @@ var Lightstring = {
       open: function(aService) {
         //FIXME no ending "/" - node-xmpp-bosh bug
         return "<stream:stream to='" + aService + "'" +
-                             " xmlns='" + Lightstring.ns.jabberClient + "'" +
-                             " xmlns:stream='" + Lightstring.ns.stream + "'" +
+                             " xmlns='" + Lightstring.ns['jabber_client'] + "'" +
+                             " xmlns:stream='" + Lightstring.ns.['streams'] + "'" +
                              " version='1.0'/>";
       },
       close: function() {
