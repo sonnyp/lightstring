@@ -23,35 +23,40 @@
 (function() {
   var legal_types = ['error', 'probe', 'subscribe', 'subscribed', 'unavailable', 'unsubscribe', 'unsubscribed'];
 
-  Lightstring.stanza.presence = function(object) {
-    if (object) {
-      var payloads = "";
-      var attributs = "";
-      if (object.type && legal_types.indexOf(object.type) !== -1)
-        attributs += " type='" + object.type + "'";
+  Lightstring.plugins['presence'] = {
+    stanzas: {
+      presence: function(object) {
+        if (object) {
+          var payloads = "";
+          var attributs = "";
+          if (object.type && legal_types.indexOf(object.type) !== -1)
+            attributs += " type='" + object.type + "'";
 
-      if (object.priority)
-        payloads += "<priority>" + object.priority + "</priority>";
+          if (object.priority)
+            payloads += "<priority>" + object.priority + "</priority>";
 
-      if (object.show)
-        payloads += "<show>" + object.show + "</show>";
+          if (object.show)
+            payloads += "<show>" + object.show + "</show>";
 
-      if (object.status)
-        payloads += "<status>" + object.status + "</status>";
+          if (object.status)
+            payloads += "<status>" + object.status + "</status>";
 
-      if (object.payload)
-        payloads += object.payload;
+          if (object.payload)
+            payloads += object.payload;
 
-      if (payloads)
-        return "<presence" + attributs + ">" + payloads + "</presence>";
-      else
-        return "<presence" + attributs + "/>";
+          if (payloads)
+            return "<presence" + attributs + ">" + payloads + "</presence>";
+          else
+            return "<presence" + attributs + "/>";
 
-    } else
-      return "<presence/>";
-  };
-
-  Lightstring.presence = function(aConnection, aObject) {
-    aConnection.send(Lightstring.stanza.presence(aObject));
+        } else
+          return "<presence/>";
+      },
+    },
+    methods: {
+      presence: function(aObject) {
+        this.send(Lightstring.stanzas.presence(aObject));
+      }
+    }
   };
 })();
