@@ -160,7 +160,6 @@ Lightstring.Connection = function(aService) {
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          alert('iq callback!!!');
           this.jid = new Lightstring.JID(stanza.DOM.textContent);
           that.send(
             "<iq type='set' id='"+Lightstring.newId('sendiq:')+"' xmlns='jabber:client'>" +
