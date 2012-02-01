@@ -391,17 +391,23 @@ Lightstring.Connection.prototype = {
 
       var plugin = Lightstring.plugins[name];
 
+      //Namespaces
       for (var ns in plugin.namespaces)
         Lightstring.ns[ns] = plugin.namespaces[ns];
 
+      //Stanzas
       Lightstring.stanzas[name] = {};
       for (var stanza in plugin.stanzas)
         Lightstring.stanzas[name][stanza] = plugin.stanzas[stanza];
 
+      //Handlers
       for (var handler in plugin.handlers)
         this.on(handler, plugin.handlers[handler]);
 
-      this[name] = plugin.methods;
+      //Methods
+      this[name] = {}:
+      for (var method in plugins.methods)
+        this[name][method].bind(this);
 
       if (plugin.init)
         plugin.init();
