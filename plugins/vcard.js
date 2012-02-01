@@ -19,24 +19,26 @@
 /////////
 //vCard//
 /////////
-Lightstring.NS.vcard = 'vcard-temp';
-Lightstring.stanza.vcard = {
-  'get': function(aTo) {
-    if(aTo)
-      return "<iq type='get' to='"+aTo+"'><vCard xmlns='"+Lightstring.NS.vcard+"'/></iq>";
-    else
-      return "<iq type='get'><vCard xmlns='"+Lightstring.NS.vcard+"'/></iq>";
+Lightstring.plugins['vcard'] = {
+  namespaces: {
+    vcard: 'vcard-temp'
+  },
+  stanzas: {
+    get: function(aTo) {
+      if (aTo)
+        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" + Lightstring.NS.vcard + "'/></iq>";
+      else
+        return "<iq type='get'><vCard xmlns='" + Lightstring.NS.vcard + "'/></iq>";
+    }
+  },
+  //FIXME: we should return a proper vcard, not an XMPP one
+  methods: {
+    get function(aTo, aResult, aError) {
+      this.send(Lightstring.stanzas['vcard'].get(aTo), function(stanza) {
+        var vcard = stanza.DOM.firstChild;
+        if (vcard)
+          aCallback(vcard);
+      }, aError);
+    }
   }
 };
-//FIXME we should return a proper vcard, not an XMPP one
-Lightstring.getVcard = function(aConnection, aTo, aCallback) {
-  aConnection.send(Lightstring.stanza.vcard.get(aTo), function(stanza, err){
-    if(stanza) {
-      var vcard = stanza.DOM.querySelector('vCard');
-      if(vcard)
-        aCallback(vcard);
-    }    
-    else
-      aCallback(null);
-  });
-}
