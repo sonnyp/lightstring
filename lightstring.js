@@ -44,6 +44,18 @@ var Lightstring = {
       close: function() {
         return "</stream:stream>";
       }
+    },
+    errors: {
+      iq: function(type, error) {
+        return "<iq to='" + stanza.DOM.getAttributeNS(null, 'from') + "'" +
+                  " id='" + stanza.DOM.getAttributeNS(null, 'id') + "'" +
+                  " type='error'>" +
+                 "<error type='" + type + "'>" +
+                   "<" + error + " xmlns='" + Lightstring.namespaces['xmpp_stanzas'] + "'/>" + //TODO: allow text content.
+                    //TODO: allow text and payload.
+                 "</error>" +
+               "</iq>";
+      }
     }
   },
   plugins: {},
@@ -429,8 +441,24 @@ Lightstring.Connection.prototype = {
     if (!handlers)
       return;
 
-    for (var i = 0; i < handlers.length; i++)
-      handlers[i].call(this, aData);
+    if (aData.localName !== 'iq') {
+      for (var i = 0; i < handlers.length; i++)
+        handlers[i].call(this, aData);
+
+      return;
+    }
+
+    var ret;
+    for (var i = 0; i < handlers.length; i++) {
+      ret = handlers[i].call(this, aData);
+      if (typeof ret !== 'boolean')
+        return; //TODO: emit a big error!
+
+      if (ret)
+        return;
+    }
+
+    conn.send(Lightstring.stanzas.errors.iq('cancel', 'service-unavailable'));
   },
   /**
    * @function Register an event handler.
