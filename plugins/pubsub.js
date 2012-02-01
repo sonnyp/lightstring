@@ -19,111 +19,130 @@
 //////////
 //PubSub//
 //////////
-Lightstring.plugins['pubsub'] = {
-  namespaces: {
-    x: "jabber:x:data", //XXX
-    pubsub: "http://jabber.org/protocol/pubsub",
-    pubsub_owner: "http://jabber.org/protocol/pubsub#owner",
-    pubsub_error: "http://jabber.org/protocol/pubsub#error"
-  },
-  stanzas: {
-    getConfig: function(aTo, aNode) {
-      return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><configure node='" + aNode + "'/></pubsub></iq>";
-    },
-    items: function(aTo, aNode) {
-      return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><items node='" + aNode + "'/></pubsub></iq>";
-    },
-    affiliations: function(aTo, aNode) {
-      return "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><affiliations node='" + aNode + "'/></pubsub></iq>";
-    },
-    publish: function(aTo, aNode, aItem, aId) {
-      return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><publish node='" + aNode + "'><item id='" + aId + "'>" + aItem + "</item></publish></pubsub></iq>";
-    },
-    retract: function(aTo, aNode, aItem) {
-      return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><retract node='" + aNode + "'><item id='" + aItem + "'/></retract></pubsub></iq>";
-    },
-    'delete': function(aTo, aNode, aURI) {
-      return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><delete node='" + aNode + "'/></pubsub></iq>";
-    },
-    create: function(aTo, aNode, aFields) {
-      var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><create node='" + aNode + "'/>";
-      if (aFields) {
-        iq += "<configure><x xmlns='" + Lightstring.NS.x + "' type='submit'>"
-        aFields.forEach(function(field) {
-          iq += field;
-        });
-        iq += "</x></configure>";
-      }
-      iq += "</pubsub></iq>";
-      return iq;
-    },
-    setAffiliations: function(aTo, aNode, aAffiliations) {
-      var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><affiliations node='" + aNode + "'>";
-      for (var i = 0; i < aAffiliations.length; i++)
-        iq += "<affiliation jid='" + aAffiliations[i][0] + "' affiliation='" + aAffiliations[i][1] + "'/>";
-      iq += "</affiliations></pubsub></iq>";
-      return iq;
-    },
-  },
-  methods: {
-    items: function(aTo, aNode, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(stanza) {
-        var items = [];
-        var elms = stanza.DOM.querySelectorAll('item');
-        for (var i = 0; i < elms.length; i++) {
-          var node = elms[i];
-          var item = {
-            id: node.getAttribute('id'),
-            name: node.querySelector('title').textContent,
-            src: node.querySelector('content').getAttribute('src'),
-            type: node.querySelector('content').getAttribute('type'),
-          }
-          var miniature = node.querySelector('link');
-          if (miniature)
-            item.miniature = miniature.getAttribute('href');
-          items.push(item);
-        };
+(function() {
+  var event_tags = ['collection', 'configuration', 'delete', 'items', 'purge', 'subscription'];
 
-        if (aResult)
-          aResult(items);
-      }, aError);
+  Lightstring.plugins['pubsub'] = {
+    namespaces: {
+      x: "jabber:x:data", //XXX
+      pubsub: "http://jabber.org/protocol/pubsub",
+      pubsub_owner: "http://jabber.org/protocol/pubsub#owner",
+      pubsub_event: "http://jabber.org/protocol/pubsub#event",
+      pubsub_error: "http://jabber.org/protocol/pubsub#error"
     },
-    create: function(aTo, aNode, aFields, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.create(aTo, aNode, aFields), aResult, aError);
-    },
-    config: function(aTo, aNode, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.getConfig(aTo, aNode), function(stanza) {
-        //FIXME: wtf?
-        var accessmodel = stanza.DOM.querySelector('field[var="pubsub#access_model"]').lastChild.textContent;
-        if(accessmodel)
-          aResult, aError(accessmodel);
-        else
-          aResult, aError(null);
-      });
-    },
-    retract: function(aTo, aNode, aItem, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), aResult, aError);
-    },
-    publish = function(aTo, aNode, aItem, aId, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), aResult, aError);
-    },
-    'delete': function(aTo, aNode, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.delete(aTo, aNode), aResult, aError);
-    },
-    getAffiliations: function(aTo, aNode, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.affiliations(aTo, aNode), function(stanza) {
-        if((stanza.DOM.getAttribute('type') === 'result') && aResult, aError) {
-          var affiliations = {};
-          stanza.DOM.querySelectorAll('affiliation').forEach(function(affiliation) {
-            affiliations[affiliation.getAttribute("jid")] = affiliation.getAttribute("affiliation");
-          })
-          if (aResult)
-            aResult(affiliations);
+    stanzas: {
+      getConfig: function(aTo, aNode) {
+        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><configure node='" + aNode + "'/></pubsub></iq>";
+      },
+      items: function(aTo, aNode) {
+        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><items node='" + aNode + "'/></pubsub></iq>";
+      },
+      affiliations: function(aTo, aNode) {
+        return "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><affiliations node='" + aNode + "'/></pubsub></iq>";
+      },
+      publish: function(aTo, aNode, aItem, aId) {
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><publish node='" + aNode + "'><item id='" + aId + "'>" + aItem + "</item></publish></pubsub></iq>";
+      },
+      retract: function(aTo, aNode, aItem) {
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><retract node='" + aNode + "'><item id='" + aItem + "'/></retract></pubsub></iq>";
+      },
+      'delete': function(aTo, aNode, aURI) {
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><delete node='" + aNode + "'/></pubsub></iq>";
+      },
+      create: function(aTo, aNode, aFields) {
+        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><create node='" + aNode + "'/>";
+        if (aFields) {
+          iq += "<configure><x xmlns='" + Lightstring.NS.x + "' type='submit'>"
+          aFields.forEach(function(field) {
+            iq += field;
+          });
+          iq += "</x></configure>";
         }
-      }, aError);
+        iq += "</pubsub></iq>";
+        return iq;
+      },
+      setAffiliations: function(aTo, aNode, aAffiliations) {
+        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><affiliations node='" + aNode + "'>";
+        for (var i = 0; i < aAffiliations.length; i++)
+          iq += "<affiliation jid='" + aAffiliations[i][0] + "' affiliation='" + aAffiliations[i][1] + "'/>";
+        iq += "</affiliations></pubsub></iq>";
+        return iq;
+      },
     },
-    setAffiliations: function(aTo, aNode, aAffiliations, aResult, aError) {
-      this.send(Lightstring.stanza.pubsub.setAffiliations(aTo, aNode, aAffiliations), aResult, aError);
+    methods: {
+      items: function(aTo, aNode, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(stanza) {
+          var items = [];
+          var elms = stanza.DOM.querySelectorAll('item');
+          for (var i = 0; i < elms.length; i++) {
+            var node = elms[i];
+            var item = {
+              id: node.getAttribute('id'),
+              name: node.querySelector('title').textContent,
+              src: node.querySelector('content').getAttribute('src'),
+              type: node.querySelector('content').getAttribute('type'),
+            }
+            var miniature = node.querySelector('link');
+            if (miniature)
+              item.miniature = miniature.getAttribute('href');
+            items.push(item);
+          };
+
+          if (aResult)
+            aResult(items);
+        }, aError);
+      },
+      create: function(aTo, aNode, aFields, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.create(aTo, aNode, aFields), aResult, aError);
+      },
+      config: function(aTo, aNode, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.getConfig(aTo, aNode), function(stanza) {
+          //FIXME: wtf?
+          var accessmodel = stanza.DOM.querySelector('field[var="pubsub#access_model"]').lastChild.textContent;
+          if(accessmodel)
+            aResult, aError(accessmodel);
+          else
+            aResult, aError(null);
+        });
+      },
+      retract: function(aTo, aNode, aItem, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), aResult, aError);
+      },
+      publish = function(aTo, aNode, aItem, aId, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), aResult, aError);
+      },
+      'delete': function(aTo, aNode, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.delete(aTo, aNode), aResult, aError);
+      },
+      getAffiliations: function(aTo, aNode, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.affiliations(aTo, aNode), function(stanza) {
+          if((stanza.DOM.getAttribute('type') === 'result') && aResult, aError) {
+            var affiliations = {};
+            stanza.DOM.querySelectorAll('affiliation').forEach(function(affiliation) {
+              affiliations[affiliation.getAttribute("jid")] = affiliation.getAttribute("affiliation");
+            })
+            if (aResult)
+              aResult(affiliations);
+          }
+        }, aError);
+      },
+      setAffiliations: function(aTo, aNode, aAffiliations, aResult, aError) {
+        this.send(Lightstring.stanza.pubsub.setAffiliations(aTo, aNode, aAffiliations), aResult, aError);
+      }
+    },
+    init: function() {
+      //TODO: find a way to put that in handlers, it’s UGLY!
+      this.on('in-message-*-' + Lightstring.namespaces['pubsub_event'] + ':event', function(stanza) {
+        var payload = stanza.firstChild.firstChild; //XXX
+        if (payload.namespaceURI !== Lightstring.namespaces['pubsub_event'])
+          return; //TODO: emit something.
+
+        var name = payload.localName;
+        if (event_tags.indexOf(name) === -1)
+          return; //TODO: emit something.
+
+        this.emit('pubsub:' + name);
+      });
     }
-  }
-};
+  };
+})();
