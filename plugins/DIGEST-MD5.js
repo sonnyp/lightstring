@@ -39,7 +39,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
       var that = this;
       //TODO check if bind supported
       var bind =
-        "<iq type='set' id='"+Lightstring.newId('sendiq:')+"' xmlns='jabber:client'>" +
+        "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
           "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
             (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
           "</bind>" +
@@ -51,7 +51,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
           that.jid = new Lightstring.JID(stanza.DOM.textContent);
           that.send(
-            "<iq type='set' id='"+Lightstring.newId('sendiq:')+"' xmlns='jabber:client'>" +
+            "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
             "</iq>",
             function() {

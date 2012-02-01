@@ -141,8 +141,6 @@ Lightstring.Connection.prototype = {
 
     if (!this.jid.bare)
       throw 'Lightstring: Connection.jid is undefined.';
-    if (!this.password)
-      throw 'Lightstring: Connection.password is undefined.';
     if (!this.service)
       throw 'Lightstring: Connection.service is undefined.';
 
@@ -186,6 +184,7 @@ Lightstring.Connection.prototype = {
 
 
       var name = stanza.DOM.localName;
+      //FIXME SASL mechanisms and XMPP features can be both in a stream:features
       if (name === 'features') {
         //SASL mechanisms
         if (stanza.DOM.firstChild.localName === 'mechanisms') {
@@ -196,7 +195,7 @@ Lightstring.Connection.prototype = {
           that.emit('mechanisms', stanza);
         }
         //XMPP features
-        else if (stanza.DOM.firstChild.localName === 'c') {
+        else {
           //TODO: stanza.features
           that.emit('features', stanza);
         }

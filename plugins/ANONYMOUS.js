@@ -16,22 +16,15 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-Lightstring.plugins['PLAIN'] = {
+Lightstring.plugins['ANONYMOUS'] = {
   handlers: {
     'mechanisms': function (stanza) {
-      if(stanza.mechanisms.indexOf('PLAIN') === -1)
+      if(stanza.mechanisms.indexOf('ANONYMOUS') === -1)
         return;
 
-      var token = btoa(
-        this.jid +
-        '\u0000' +
-        this.jid.node +
-        '\u0000' +
-        this.password
-      );
       this.send(
         "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
-             " mechanism='PLAIN'>" + token + "</auth>"
+             " mechanism='ANONYMOUS'/>"
       );
     },
     'success': function (stanza) {
@@ -47,16 +40,16 @@ Lightstring.plugins['PLAIN'] = {
       //TODO check if bind supported
       var bind =
         "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
-          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
-            (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
-          "</bind>" +
+          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>" +
         "</iq>";
+
       this.send(
         bind,
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
           that.jid = new Lightstring.JID(stanza.DOM.textContent);
+
           that.send(
             "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
