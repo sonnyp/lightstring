@@ -395,13 +395,13 @@ Lightstring.Connection.prototype = {
         Lightstring.ns[ns] = plugin.namespaces[ns];
 
       for (var stanza in plugin.stanzas)
-        Lightstring.stanzas[stanza] = plugin.stanzas[stanza];
+        Lightstring.stanzas[name][stanza] = plugin.stanzas[stanza];
 
       for (var handler in plugin.handlers)
         this.on(handler, plugin.handlers[handler]);
 
       for (var method in plugin.methods)
-        this.methods[method] = plugin.methods[method];
+        this[name][method] = plugin.methods[method];
     }
   },
   /**
