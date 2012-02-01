@@ -202,12 +202,14 @@ Lightstring.Connection.prototype = {
         }
       }
       else if (name === 'challenge') {
-
-
+        that.emit('challenge', stanza);
       }
       else if (name === 'response') {
 
 
+      }
+      else if (name === 'failure') {
+        that.emit('failure', stanza);
       }
       else if (name === 'success') {
         that.emit('success', stanza);

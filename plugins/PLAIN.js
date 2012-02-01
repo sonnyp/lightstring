@@ -34,7 +34,6 @@ Lightstring.plugins['PLAIN'] = {
              " mechanism='PLAIN'>" + token + "</auth>"
       );
     },
-    //TODO twice success event
     'success': function (stanza) {
       this.send(
         "<stream:stream to='" + this.jid.domain + "'" +
