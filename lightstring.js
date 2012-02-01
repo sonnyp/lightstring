@@ -83,7 +83,7 @@ var Lightstring = {
       XML = this.serializer.serializeToString(aElement);
     }
     catch (e) {
-      alert(e);
+      //TODO throw error
     }
     finally {
       return XML;
@@ -304,7 +304,7 @@ Lightstring.Connection.prototype = {
       
       if(!stanza.DOM)
         return;
-      
+
       that.emit(stanza.DOM.tagName, stanza);
 
       if (stanza.DOM.tagName === 'iq') {
@@ -405,7 +405,7 @@ Lightstring.Connection.prototype = {
         this.on(handler, plugin.handlers[handler]);
 
       //Methods
-      this[name] = {}:
+      this[name] = {};
       for (var method in plugins.methods)
         this[name][method].bind(this);
 
