@@ -25,7 +25,7 @@
 
   Lightstring.plugins['presence'] = {
     stanzas: {
-      presence: function(object) {
+      out: function(object) {
         if (object) {
           var payloads = "";
           var attributs = "";
@@ -54,8 +54,8 @@
       },
     },
     methods: {
-      presence: function(aObject) {
-        this.send(Lightstring.stanzas.presence(aObject));
+      send: function(aObject) {
+        this.send(Lightstring.stanzas.presence.out(aObject));
       }
     }
   };
