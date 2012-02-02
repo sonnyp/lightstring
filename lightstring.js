@@ -24,7 +24,8 @@ var Lightstring = {
    */
   ns: {
     streams: 'http://etherx.jabber.org/streams',
-    jabber_client: 'jabber:client'
+    jabber_client: 'jabber:client',
+    xmpp_stanzas: 'urn:ietf:params:xml:ns:xmpp-stanzas'
   },
   /**
    * @namespace Holds XMPP stanza builders.
@@ -150,10 +151,10 @@ Lightstring.Connection.prototype = {
     if (!this.service)
       return; //TODO: error
 
-    if(typeof(WebSocket) === "function") {
+    if (typeof(WebSocket) === "function") {
       this.socket = new WebSocket(this.service, 'xmpp');
     }
-    else if(typeof(MozWebSocket) === "function") {
+    else if (typeof(MozWebSocket) === "function") {
       this.socket = new MozWebSocket(this.service, 'xmpp');
     }
     else {
@@ -186,7 +187,7 @@ Lightstring.Connection.prototype = {
       //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
       Conn.emit('input', stanza);
 
-      if(!stanza.DOM)
+      if (!stanza.DOM)
         return;
 
       var name = stanza.DOM.localName;
@@ -240,6 +241,10 @@ Lightstring.Connection.prototype = {
 
         delete Conn.callbacks[id];
       }
+
+      else if (name === 'presence' || name === 'message') {
+        Conn.emit(name, stanza);
+      }
     });
   },
   /**
@@ -253,7 +258,7 @@ Lightstring.Connection.prototype = {
     else
       var stanza = aStanza;
 
-    if(!stanza)
+    if (!stanza)
       return;
 
     if (stanza.DOM.tagName === 'iq') {
@@ -313,7 +318,7 @@ Lightstring.Connection.prototype = {
       //Methods
       this[name] = {};
       for (var method in plugin.methods)
-        this[name][method].bind(this);
+        this[name][method] = plugin.methods[method].bind(this);
 
       if (plugin.init)
         plugin.init();
@@ -347,6 +352,10 @@ Lightstring.Connection.prototype = {
     }
 
     if (aData && aData.DOM) {
+      var type = aData.DOM.getAttributeNS(null, 'type');
+      if (type !== 'get' && type !== 'set')
+        return;
+
       var from = aData.DOM.getAttributeNS(null, 'from');
       var id = aData.DOM.getAttributeNS(null, 'id');
       this.send(Lightstring.stanzas.errors.iq(from, id, 'cancel', 'service-unavailable'));

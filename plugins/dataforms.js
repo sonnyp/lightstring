@@ -91,7 +91,7 @@
     return fields;
   };
 
-  Lightstring.plugins['disco'] = {
+  Lightstring.plugins['dataforms'] = {
     namespaces: {
       dataforms: 'jabber:x:data'
     },

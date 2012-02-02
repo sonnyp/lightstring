@@ -83,7 +83,7 @@
         }, aError);
       },
       info: function(aTo, aNode, aResult, aError) {
-        this.send(Lightstring.stanzas.disco.info(aTo, aNode), function(stanza){
+        this.send(Lightstring.stanzas.disco.info(aTo, aNode), function(stanza) {
           var identities = [];
           var features = [];
           var fields = {};
@@ -125,8 +125,9 @@
             aResult(stanza);
         }, aError);
       },
-      addFeature: function(feature) {
-        features.push(feature);
+      addFeatures: function() {
+        for (var i = 0; i < arguments.length; i++)
+          features.push(arguments[i]);
       }
     },
     init: function() {
@@ -167,6 +168,7 @@
              "</iq>";
 
         conn.send(res);
+        return true;
       });
     }
   };
