@@ -334,6 +334,15 @@ Lightstring.Connection.prototype = {
     if (!handlers)
       return;
 
+    //No data events
+    if(!aData) {
+      for (var i = 0; i < handlers.length; i++)
+        handlers[i].call(this, aData);
+
+      return;
+    }
+
+    //Non-iq events
     if (aData && aData.DOM && aData.DOM.localName !== 'iq') {
       for (var i = 0; i < handlers.length; i++)
         handlers[i].call(this, aData);
@@ -341,6 +350,7 @@ Lightstring.Connection.prototype = {
       return;
     }
 
+    //Iq events
     var ret;
     for (var i = 0; i < handlers.length; i++) {
       ret = handlers[i].call(this, aData);
