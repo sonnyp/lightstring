@@ -108,7 +108,7 @@
       retract: function(aTo, aNode, aItem, aResult, aError) {
         this.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), aResult, aError);
       },
-      publish = function(aTo, aNode, aItem, aId, aResult, aError) {
+      publish: function(aTo, aNode, aItem, aId, aResult, aError) {
         this.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), aResult, aError);
       },
       'delete': function(aTo, aNode, aResult, aError) {
