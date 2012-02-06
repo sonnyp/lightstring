@@ -132,7 +132,7 @@
     },
     init: function() {
       //TODO: find a way to put that in handlers, it’s UGLY!
-      this.on('in-message-*-' + Lightstring.namespaces['pubsub_event'] + ':event', function(stanza) {
+      this.on('in-message-*-' + Lightstring.ns['pubsub_event'] + ':event', function(stanza) {
         var payload = stanza.firstChild.firstChild; //XXX
         if (payload.namespaceURI !== Lightstring.namespaces['pubsub_event'])
           return; //TODO: emit something.
