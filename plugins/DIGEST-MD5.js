@@ -78,7 +78,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
       );
     },
     'challenge': function (stanza) {
-      //FIXME this is mostly Strophe code
+      //FIXME: this is Strophe.js code
 
       function _quote(str) {
         return '"' + str.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
