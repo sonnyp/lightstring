@@ -321,7 +321,7 @@ Lightstring.Connection.prototype = {
         this[name][method] = plugin.methods[method].bind(this);
 
       if (plugin.init)
-        plugin.init();
+        plugin.init.apply(this);
     }
   },
   /**

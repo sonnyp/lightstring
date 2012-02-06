@@ -131,7 +131,7 @@
       }
     },
     init: function() {
-      conn.on('iq/' + Lightstring.ns['disco#info'] + ':query', function(stanza) {
+      this.on('iq/' + Lightstring.ns['disco#info'] + ':query', function(stanza) {
         if (stanza.DOM.getAttributeNS(null, 'type') !== 'get')
           return false;
 
@@ -140,7 +140,7 @@
           var response = "<iq to='" + stanza.DOM.getAttributeNS(null, 'from') + "'" +
                             " id='" + stanza.DOM.getAttributeNS(null, 'id') + "'" +
                             " type='error'/>"; //TODO: precise the error.
-          conn.send(response);
+          this.send(response);
           return true;
         }
 
@@ -167,7 +167,7 @@
         res += "</query>" +
              "</iq>";
 
-        conn.send(res);
+        this.send(res);
         return true;
       });
     }
