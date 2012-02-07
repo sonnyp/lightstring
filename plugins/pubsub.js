@@ -32,27 +32,27 @@
     },
     stanzas: {
       getConfig: function(aTo, aNode) {
-        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><configure node='" + aNode + "'/></pubsub></iq>";
+        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><configure node='" + aNode + "'/></pubsub></iq>";
       },
       items: function(aTo, aNode) {
-        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><items node='" + aNode + "'/></pubsub></iq>";
+        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><items node='" + aNode + "'/></pubsub></iq>";
       },
       affiliations: function(aTo, aNode) {
-        return "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><affiliations node='" + aNode + "'/></pubsub></iq>";
+        return "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><affiliations node='" + aNode + "'/></pubsub></iq>";
       },
       publish: function(aTo, aNode, aItem, aId) {
-        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><publish node='" + aNode + "'><item id='" + aId + "'>" + aItem + "</item></publish></pubsub></iq>";
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><publish node='" + aNode + "'><item id='" + aId + "'>" + aItem + "</item></publish></pubsub></iq>";
       },
       retract: function(aTo, aNode, aItem) {
-        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><retract node='" + aNode + "'><item id='" + aItem + "'/></retract></pubsub></iq>";
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><retract node='" + aNode + "'><item id='" + aItem + "'/></retract></pubsub></iq>";
       },
       'delete': function(aTo, aNode, aURI) {
-        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><delete node='" + aNode + "'/></pubsub></iq>";
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><delete node='" + aNode + "'/></pubsub></iq>";
       },
       create: function(aTo, aNode, aFields) {
-        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub + "'><create node='" + aNode + "'/>";
+        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><create node='" + aNode + "'/>";
         if (aFields) {
-          iq += "<configure><x xmlns='" + Lightstring.NS.x + "' type='submit'>"
+          iq += "<configure><x xmlns='" + Lightstring.ns.x + "' type='submit'>"
           aFields.forEach(function(field) {
             iq += field;
           });
@@ -62,7 +62,7 @@
         return iq;
       },
       setAffiliations: function(aTo, aNode, aAffiliations) {
-        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.NS.pubsub_owner + "'><affiliations node='" + aNode + "'>";
+        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><affiliations node='" + aNode + "'>";
         for (var i = 0; i < aAffiliations.length; i++)
           iq += "<affiliation jid='" + aAffiliations[i][0] + "' affiliation='" + aAffiliations[i][1] + "'/>";
         iq += "</affiliations></pubsub></iq>";

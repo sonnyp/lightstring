@@ -96,10 +96,10 @@
             var ns = child.namespaceURI;
             var name = child.localName;
 
-            if (ns === Lightstring.namespaces['disco#info'] && name === 'feature')
+            if (ns === Lightstring.ns['disco#info'] && name === 'feature')
               features.push(child.getAttributeNS(null, 'var'));
 
-            else if (ns === Lightstring.namespaces['disco#info'] && name === 'identity') {
+            else if (ns === Lightstring.ns['disco#info'] && name === 'identity') {
               var identity = {
                 category: child.getAttributeNS(null, 'category'),
                 type: child.getAttributeNS(null, 'type')
@@ -109,10 +109,9 @@
                 identity.name = name;
               identities.push(identity);
             }
-
-            else if (ns === Lightstring.namespaces['dataforms'] && name === 'x')
-              this.disco.parse(child); //TODO: check if that plugin is enabled.
-
+            else if (ns === Lightstring.ns['dataforms'] && name === 'x') {
+              var fields = this.dataforms.parse(child); //TODO: check if that plugin is enabled.
+            }
             else
               ; //TODO: emit a warning.
           }

@@ -45,25 +45,25 @@
       if (_var)
         field.var = _var;
 
-      var desc = child.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'desc');
+      var desc = child.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'desc');
       if (desc.length > 1)
         ; //TODO: emit a warning if there is more than one.
       if (0 in desc)
         field.desc = desc[0];
 
-      var required = child.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'required');
+      var required = child.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'required');
       if (required.length > 1)
         ; //TODO: emit a warning if there is more than one.
       field.required = (0 in required)
 
-      var values = child.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'value');
+      var values = child.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'value');
       if (values.length) {
         field.values = [];
         for (var j = 0; j < values.length; j++)
           field.values.push(values[j].textContent);
       }
 
-      var options = child.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'option');
+      var options = child.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'option');
       if (options.length) {
         field.options = [];
         for (var j = 0; j < options.length; j++) {
@@ -71,7 +71,7 @@
 
           var opt = options[j];
 
-          var val = opt.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'value');
+          var val = opt.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'value');
           if (val.length > 1)
             ; //TODO: emit a warning if there is more than one.
           if (0 in val)
@@ -97,7 +97,7 @@
     },
     methods: {
       parse: function(x) {
-        if (x.namespaceURI !== Lightstring.namespaces['dataforms'] || x.localName !== 'x')
+        if (x.namespaceURI !== Lightstring.ns['dataforms'] || x.localName !== 'x')
           return null;
 
         var form = {};
@@ -107,28 +107,28 @@
           return; //TODO: emit a warning too?
         form.type = type;
 
-        var title = x.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'title');
+        var title = x.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'title');
         if (title.length > 1)
           ; //TODO: emit a warning if there is more than one.
         else if (0 in title)
           form.title = title[0];
 
-        var fields = parseFields(x.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'fields'));
+        var fields = parseFields(x.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'field'));
         if (fields)
           form.fields = fields
 
-        var reported = x.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'reported');
+        var reported = x.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'reported');
         if (reported.length > 1)
           ; //TODO: emit a warning if there is more than one.
         else if (0 in reported) {
-          var fields = parseFields(reported[0].getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'fields'));
+          var fields = parseFields(reported[0].getElementsByTagNameNS(Lightstring.ns['dataforms'], 'field'));
           if (fields)
             form.reported = fields
         }
 
-        var itemsList = x.getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'item');
-        if (itemsList) {
-          var fields = parseFields(itemsList[0].getElementsByTagNameNS(Lightstring.namespaces['dataforms'], 'fields'));
+        var itemsList = x.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'item');
+        if (itemsList.length) {
+          var fields = parseFields(itemsList[0].getElementsByTagNameNS(Lightstring.ns['dataforms'], 'fields'));
           if (fields)
             form.items = fields;
         }
