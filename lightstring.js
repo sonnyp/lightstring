@@ -269,10 +269,10 @@ Lightstring.Connection.prototype = {
       var callback = {success: aSuccess, error: aError};
 
       var id = stanza.DOM.getAttributeNS(null, 'id');
-      if (!id)
-        ; //TODO: warning
-      else
-        this.callbacks[id] = callback;
+      if (!id) {
+        var id = Lightstring.newId('sendiq:');
+        stanza.DOM.setAttributeNS(null, 'id', id);
+      }
 
       this.callbacks[id] = callback;
 
