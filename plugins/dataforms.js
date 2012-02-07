@@ -127,7 +127,7 @@
         }
 
         var itemsList = x.getElementsByTagNameNS(Lightstring.ns['dataforms'], 'item');
-        if (itemsList) {
+        if (itemsList.length) {
           var fields = parseFields(itemsList[0].getElementsByTagNameNS(Lightstring.ns['dataforms'], 'fields'));
           if (fields)
             form.items = fields;
