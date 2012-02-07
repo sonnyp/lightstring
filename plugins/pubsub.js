@@ -71,7 +71,7 @@
     },
     methods: {
       items: function(aTo, aNode, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.items(aTo, aNode), function(stanza) {
+        this.send(Lightstring.stanzas.pubsub.items(aTo, aNode), function(stanza) {
           var items = [];
           var elms = stanza.DOM.querySelectorAll('item');
           for (var i = 0; i < elms.length; i++) {

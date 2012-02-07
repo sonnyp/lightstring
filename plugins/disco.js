@@ -109,9 +109,9 @@
                 identity.name = name;
               identities.push(identity);
             }
-            else if (ns === Lightstring.ns['dataforms'] && name === 'x') {
+            else if (ns === Lightstring.ns['dataforms'] && name === 'x')
               var fields = this.dataforms.parse(child); //TODO: check if that plugin is enabled.
-            }
+
             else
               ; //TODO: emit a warning.
           }
