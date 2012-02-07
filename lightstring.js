@@ -235,9 +235,9 @@ Lightstring.Connection.prototype = {
 
         var callback = Conn.callbacks[id];
         if (type === 'result' && callback.success)
-          callback.success(stanza);
+          callback.success.call(Conn, stanza);
         else if (type === 'error' && callback.error)
-          callback.error(stanza);
+          callback.error.call(Conn, stanza);
 
         delete Conn.callbacks[id];
       }
@@ -274,7 +274,10 @@ Lightstring.Connection.prototype = {
       else
         this.callbacks[id] = callback;
 
-    } else if (aSuccess || aError)
+      this.callbacks[id] = callback;
+
+    }
+    else if (aSuccess || aError)
       ; //TODO: warning (no callback without iq)
 
 
