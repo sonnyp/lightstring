@@ -93,10 +93,10 @@
         }, aError);
       },
       create: function(aTo, aNode, aFields, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.create(aTo, aNode, aFields), aResult, aError);
+        this.send(Lightstring.stanzas.pubsub.create(aTo, aNode, aFields), aResult, aError);
       },
       config: function(aTo, aNode, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.getConfig(aTo, aNode), function(stanza) {
+        this.send(Lightstring.stanzas.pubsub.getConfig(aTo, aNode), function(stanza) {
           //FIXME: wtf?
           var accessmodel = stanza.DOM.querySelector('field[var="pubsub#access_model"]').lastChild.textContent;
           if(accessmodel)
@@ -106,16 +106,16 @@
         });
       },
       retract: function(aTo, aNode, aItem, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.retract(aTo, aNode, aItem), aResult, aError);
+        this.send(Lightstring.stanzas.pubsub.retract(aTo, aNode, aItem), aResult, aError);
       },
       publish: function(aTo, aNode, aItem, aId, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.publish(aTo, aNode, aItem, aId), aResult, aError);
+        this.send(Lightstring.stanzas.pubsub.publish(aTo, aNode, aItem, aId), aResult, aError);
       },
       'delete': function(aTo, aNode, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.delete(aTo, aNode), aResult, aError);
+        this.send(Lightstring.stanzas.pubsub.delete(aTo, aNode), aResult, aError);
       },
       getAffiliations: function(aTo, aNode, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.affiliations(aTo, aNode), function(stanza) {
+        this.send(Lightstring.stanzas.pubsub.affiliations(aTo, aNode), function(stanza) {
           if((stanza.DOM.getAttribute('type') === 'result') && aResult, aError) {
             var affiliations = {};
             stanza.DOM.querySelectorAll('affiliation').forEach(function(affiliation) {
@@ -127,7 +127,7 @@
         }, aError);
       },
       setAffiliations: function(aTo, aNode, aAffiliations, aResult, aError) {
-        this.send(Lightstring.stanza.pubsub.setAffiliations(aTo, aNode, aAffiliations), aResult, aError);
+        this.send(Lightstring.stanzas.pubsub.setAffiliations(aTo, aNode, aAffiliations), aResult, aError);
       }
     },
     init: function() {
