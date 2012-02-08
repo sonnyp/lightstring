@@ -151,20 +151,26 @@ Lightstring.Connection.prototype = {
     if (!this.service)
       return; //TODO: error
 
-    if (typeof(WebSocket) === "function") {
+    // Standard
+    if (typeof(WebSocket) === 'function')
       this.socket = new WebSocket(this.service, 'xmpp');
-    }
-    else if (typeof(MozWebSocket) === "function") {
+    // Safari
+    else if (typeof(WebSocket) === 'object')
+      this.socket = new WebSocket(this.service);
+    // Old Gecko
+    else if (typeof(MozWebSocket) === 'function') {
       this.socket = new MozWebSocket(this.service, 'xmpp');
     }
+    // No known WebSocket support
     else {
       return; //TODO: error
     }
 
     var Conn = this;
     this.socket.addEventListener('open', function() {
-      if (this.protocol !== 'xmpp')
-        return; //TODO: error
+      //FIXME: Opera/Safari WebSocket implementation doesn't support sub-protocol mechanism.
+      //if (this.protocol !== 'xmpp')
+        //return; //TODO: error
 
       var stream = Lightstring.stanzas.stream.open(Conn.jid.domain);
       //FIXME: Use Lightstring.Connection.send (problem with parsing steam);
