@@ -87,9 +87,10 @@
               item.miniature = miniature.getAttribute('href');
             items.push(item);
           };
+          stanza.items = items;
 
           if (aResult)
-            aResult(items);
+            aResult(stanza);
         }, aError);
       },
       create: function(aTo, aNode, aFields, aResult, aError) {
