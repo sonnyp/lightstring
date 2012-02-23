@@ -24,14 +24,14 @@ Lightstring.plugins['roster'] = {
     roster: 'jabber:iq:roster'
   },
   stanzas: {
-    get: function() {
+    'get': function() {
       return "<iq type='get'>" +
-               "<query xmlns='" + Lightstring.NS.roster + "'/>" +
+               "<query xmlns='" + Lightstring.ns.roster + "'/>" +
              "</iq>";
     },
     add: function(aAddress, aGroups) {
       var iq = "<iq type='set'>" +
-                 "<query xmlns='" + Lightstring.NS.roster + "'>" +
+                 "<query xmlns='" + Lightstring.ns.roster + "'>" +
                    "<item jid='" + aAddress + "'/>" +
                  "</query>" +
                "</iq>";
@@ -44,45 +44,51 @@ Lightstring.plugins['roster'] = {
     },
     remove: function(aAddress) {
       return "<iq type='set'>" +
-               "<query xmlns='" + Lightstring.NS.roster + "'>" +
+               "<query xmlns='" + Lightstring.ns.roster + "'>" +
                  "<item jid='" + aAddress + "' subscription='remove'/>" +
                "</query>" +
              "</iq>";
     }
   },
   methods: {
-    get: function(aResult, aError) {
-      this.send(this.stanza.roster.get(), function(stanza) {
+    'get': function(aSuccess, aError) {
+      this.send(Lightstring.stanzas.roster.get(), function(stanza) {
         var contacts = [];
 
-        var children = stanza.DOM.firstChild.childNodes;
-        var length = children.length;
+        var items = stanza.DOM.getElementsByTagName('item');
 
-        for (var i = 0; i < length; i++) {
-          var item = children[i];
-          var jid = item.getAttributeNS(null, 'jid');
-          var name = item.getAttributeNS(null, 'name');
-          var subscription = item.getAttributeNS(null, 'subscription');
-          var groups = item.children;
-          var contact = {};
-          if (name)
-            contact.name = name;
+        for (var i = 0; i < items.length; i++) {
+          var item = items[i];
+          var contact = {}
+
+          var jid = item.getAttribute('jid');
           if (jid)
             contact.jid = jid;
+
+          var name = item.getAttribute('name');
+          if (name)
+            contact.name = name;
+
+          var subscription = item.getAttribute('subscription');
           if (subscription)
             contact.subscription = subscription;
-          if (groups.length > 0) {
+
+          var groups = item.getElementsByTagName('group');
+          if(groups) {
             contact.groups = [];
-            groups.forEach(function(group) {
-              contact.groups.push(group.textContent);
-            });
+            for (var y = 0; y < groups.length; y++)
+              contact.groups.push(groups[y].textContent);
           }
 
           contacts.push(contact);
         }
 
-        if (aResult)
-          aResult(contacts);
+        stanza.roster = {
+          contacts: contacts
+        };
+
+        if (aSuccess)
+          aSuccess(stanza);
       }, aError);
     }
   }
