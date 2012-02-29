@@ -174,7 +174,7 @@ Lightstring.Connection.prototype = {
 
       var stream = Lightstring.stanzas.stream.open(Conn.jid.domain);
       //FIXME: Use Lightstring.Connection.send (problem with parsing steam);
-      Conn.socket.send(stream);
+      this.send(stream);
       var stanza = {
         XML: stream
       };
@@ -204,7 +204,7 @@ Lightstring.Connection.prototype = {
         //SASL mechanisms
         if (stanza.DOM.firstChild.localName === 'mechanisms') {
           stanza.mechanisms = [];
-          var nodes = stanza.DOM.querySelectorAll('mechanism');
+          var nodes = stanza.DOM.getElementsByTagName('mechanism');
           for (var i = 0; i < nodes.length; i++)
             stanza.mechanisms.push(nodes[i].textContent);
           Conn.emit('mechanisms', stanza);
@@ -231,11 +231,11 @@ Lightstring.Connection.prototype = {
         if (payload)
           Conn.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
 
-        var id = stanza.DOM.getAttributeNS(null, 'id');
+        var id = stanza.DOM.getAttribute('id');
         if (!(id && id in Conn.callbacks))
           return;
 
-        var type = stanza.DOM.getAttributeNS(null, 'type');
+        var type = stanza.DOM.getAttribute('type');
         if (type !== 'result' && type !== 'error')
           return; //TODO: warning
 
@@ -268,16 +268,16 @@ Lightstring.Connection.prototype = {
       return;
 
     if (stanza.DOM.tagName === 'iq') {
-      var type = stanza.DOM.getAttributeNS(null, 'type');
+      var type = stanza.DOM.getAttribute('type');
       if (type !== 'get' || type !== 'set')
         ; //TODO: error
 
       var callback = {success: aSuccess, error: aError};
 
-      var id = stanza.DOM.getAttributeNS(null, 'id');
+      var id = stanza.DOM.getAttribute('id');
       if (!id) {
         var id = Lightstring.newId('sendiq:');
-        stanza.DOM.setAttributeNS(null, 'id', id);
+        stanza.DOM.setAttribute('id', id);
       }
 
       this.callbacks[id] = callback;
@@ -343,7 +343,7 @@ Lightstring.Connection.prototype = {
     if (!handlers)
       return;
 
-    //No data events
+    //Non-data events
     if(!aData) {
       for (var i = 0; i < handlers.length; i++)
         handlers[i].call(this, aData);
@@ -371,12 +371,12 @@ Lightstring.Connection.prototype = {
     }
 
     if (aData && aData.DOM) {
-      var type = aData.DOM.getAttributeNS(null, 'type');
+      var type = aData.DOM.getAttribute('type');
       if (type !== 'get' && type !== 'set')
         return;
 
-      var from = aData.DOM.getAttributeNS(null, 'from');
-      var id = aData.DOM.getAttributeNS(null, 'id');
+      var from = aData.DOM.getAttribute('from');
+      var id = aData.DOM.getAttribute('id');
       this.send(Lightstring.stanzas.errors.iq(from, id, 'cancel', 'service-unavailable'));
     }
   },

@@ -46,8 +46,11 @@
       retract: function(aTo, aNode, aItem) {
         return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><retract node='" + aNode + "'><item id='" + aItem + "'/></retract></pubsub></iq>";
       },
-      'delete': function(aTo, aNode, aURI) {
+      delete: function(aTo, aNode) {
         return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><delete node='" + aNode + "'/></pubsub></iq>";
+      },
+      purge: function(aTo, aNode) {
+        return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><purge node='" + aNode + "'/></pubsub></iq>";
       },
       create: function(aTo, aNode, aFields) {
         var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><create node='" + aNode + "'/>";
@@ -112,8 +115,11 @@
       publish: function(aTo, aNode, aItem, aId, aResult, aError) {
         this.send(Lightstring.stanzas.pubsub.publish(aTo, aNode, aItem, aId), aResult, aError);
       },
-      'delete': function(aTo, aNode, aResult, aError) {
+      delete: function(aTo, aNode, aResult, aError) {
         this.send(Lightstring.stanzas.pubsub.delete(aTo, aNode), aResult, aError);
+      },
+      purge: function(aTo, aNode, aResult, aError) {
+        this.send(Lightstring.stanzas.pubsub.purge(aTo, aNode), aResult, aError);
       },
       getAffiliations: function(aTo, aNode, aResult, aError) {
         this.send(Lightstring.stanzas.pubsub.affiliations(aTo, aNode), function(stanza) {
