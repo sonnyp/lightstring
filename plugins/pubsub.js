@@ -64,6 +64,14 @@
         iq += "</pubsub></iq>";
         return iq;
       },
+      setConfig: function(aTo, aNode, aFields) {
+        var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><configure node='" + aNode + "'><x xmlns='" + Lightstring.ns.x + "' type='submit'>";
+        aFields.forEach(function(field) {
+          iq += field;
+        });
+        iq += "</x></configure></pubsub></iq>";
+        return iq;
+      },
       setAffiliations: function(aTo, aNode, aAffiliations) {
         var iq = "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><affiliations node='" + aNode + "'>";
         for (var i = 0; i < aAffiliations.length; i++)
@@ -98,6 +106,9 @@
       },
       create: function(aTo, aNode, aFields, aResult, aError) {
         this.send(Lightstring.stanzas.pubsub.create(aTo, aNode, aFields), aResult, aError);
+      },
+      configure: function(aTo, aNode, aFields, aResult, aError) {
+        this.send(Lightstring.stanzas.pubsub.setConfig(aTo, aNode, aFields), aResult, aError);
       },
       config: function(aTo, aNode, aResult, aError) {
         this.send(Lightstring.stanzas.pubsub.getConfig(aTo, aNode), function(stanza) {
