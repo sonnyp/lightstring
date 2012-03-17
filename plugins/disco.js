@@ -71,7 +71,7 @@
             var item = {
               jid: node.getAttributeNS(null, 'jid'),
               name: node.getAttributeNS(null, 'name'),
-              node: node.getAttributeNS(null, 'node')
+              node: node.getAttributeNS(null, 'node') || ''
             };
             items.push(item);
           }
