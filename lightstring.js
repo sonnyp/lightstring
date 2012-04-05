@@ -33,11 +33,10 @@ var Lightstring = {
   stanzas: {
     stream: {
       open: function(aService) {
-        //WORKAROUND: no ending "/" - node-xmpp-bosh bug
         return "<stream:stream to='" + aService + "'" +
                              " xmlns='" + Lightstring.ns['jabber_client'] + "'" +
                              " xmlns:stream='" + Lightstring.ns['streams'] + "'" +
-                             " version='1.0'/>";
+                             " version='1.0'>";
       },
       close: function() {
         return "</stream:stream>";
@@ -156,7 +155,7 @@ Lightstring.Connection.prototype = {
       this.socket = new WebSocket(this.service, 'xmpp');
     // Safari
     else if (typeof(WebSocket) === 'object')
-      this.socket = new WebSocket(this.service);
+      this.socket = new WebSocket(this.service, 'xmpp');
     // Old Gecko
     else if (typeof(MozWebSocket) === 'function') {
       this.socket = new MozWebSocket(this.service, 'xmpp');
@@ -173,7 +172,6 @@ Lightstring.Connection.prototype = {
         //return; //TODO: error
 
       var stream = Lightstring.stanzas.stream.open(Conn.jid.domain);
-      //FIXME: Use Lightstring.Connection.send (problem with parsing steam);
       this.send(stream);
       var stanza = {
         XML: stream
@@ -299,7 +297,7 @@ Lightstring.Connection.prototype = {
   disconnect: function() {
     this.emit('disconnecting');
     var stream = Lightstring.stanzas.stream.close();
-    this.send(stream);
+    this.socket.send(stream);
     this.emit('XMLOutput', stream);
     this.socket.close();
   },
