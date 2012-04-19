@@ -26,18 +26,33 @@ Lightstring.plugins['vcard'] = {
   stanzas: {
     get: function(aTo) {
       if (aTo)
-        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" + Lightstring.NS.vcard + "'/></iq>";
+        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
       else
-        return "<iq type='get'><vCard xmlns='" + Lightstring.NS.vcard + "'/></iq>";
+        return "<iq type='get'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
+    },
+    set: function(aTo) {
+      if (aTo)
+        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
+      else
+        return "<iq type='get'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
     }
   },
-  //FIXME: we should return a proper vcard, not an XMPP one
+  //FIXME: we should return a JSON vcard, not an XML one
   methods: {
-    get function(aTo, aResult, aError) {
+    get: function(aTo, aOnSuccess, aOnError) {
       this.send(Lightstring.stanzas['vcard'].get(aTo), function(stanza) {
-        var vcard = stanza.DOM.firstChild;
-        if (vcard)
-          aCallback(vcard);
+        var fields = stanza.DOM.firstChild.childNodes;
+        if (aOnSuccess && fields)
+          aOnSuccess(fields);
+      }, aOnError);
+    },
+    set: function(aTo, aFields, aOnSuccess, aOnError) {
+      this.send(Lightstring.stanzas['vcard'].set(aTo, aFields), function(stanza) {
+        if (aOnSuccess)
+          aOnSuccess();
+        //~ var vcard = stanza.DOM.firstChild;
+        //~ if (vcard)
+          //~ aResult(vcard);
       }, aError);
     }
   }
