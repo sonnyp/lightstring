@@ -26,34 +26,50 @@ Lightstring.plugins['vcard'] = {
   stanzas: {
     get: function(aTo) {
       if (aTo)
-        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
+        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" +
+          Lightstring.ns.vcard + "'/></iq>";
       else
         return "<iq type='get'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
     },
-    set: function(aTo) {
-      if (aTo)
-        return "<iq type='get' to='" + aTo + "'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
-      else
-        return "<iq type='get'><vCard xmlns='" + Lightstring.ns.vcard + "'/></iq>";
+    set: function(aFields) {
+      var iq = "<iq type='set'><vCard xmlns='" +  Lightstring.ns.vcard + "'>";
+      aFields.forEach(function(field) {
+        iq += field;
+      });
+      iq += "</vCard></iq>";
+      return iq;
     }
   },
-  //FIXME: we should return a JSON vcard, not an XML one
   methods: {
+    //FIXME: we should return a JSON vcard, not an XML one
     get: function(aTo, aOnSuccess, aOnError) {
-      this.send(Lightstring.stanzas['vcard'].get(aTo), function(stanza) {
-        var fields = stanza.DOM.firstChild.childNodes;
-        if (aOnSuccess && fields)
-          aOnSuccess(fields);
-      }, aOnError);
+      this.send(Lightstring.stanzas['vcard'].get(aTo),
+        // on success
+        function(stanza) {
+          var fields = stanza.DOM.firstChild;
+          if (aOnSuccess && fields)
+            aOnSuccess(fields);
+        },
+        //on error
+        function(stanza) {
+          if (aOnError)
+            aOnError(sanza);
+        }
+      );
     },
-    set: function(aTo, aFields, aOnSuccess, aOnError) {
-      this.send(Lightstring.stanzas['vcard'].set(aTo, aFields), function(stanza) {
-        if (aOnSuccess)
-          aOnSuccess();
-        //~ var vcard = stanza.DOM.firstChild;
-        //~ if (vcard)
-          //~ aResult(vcard);
-      }, aError);
+    set: function(aFields, aOnSuccess, aOnError) {
+      this.send(Lightstring.stanzas['vcard'].set(aFields),
+        //on success
+        function(stanza) {
+          if (aOnSuccess)
+            aOnSuccess(stanza.DOM.firstChild);
+        },
+        //on error
+        function(stanza) {
+          if (aOnError)
+            aOnError(stanza);
+        }
+      );
     }
   }
 };
