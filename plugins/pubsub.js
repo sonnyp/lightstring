@@ -81,28 +81,13 @@
       },
     },
     methods: {
-      items: function(aTo, aNode, aResult, aError) {
+      items: function(aTo, aNode, aOnSuccess, aOnError) {
         this.send(Lightstring.stanzas.pubsub.items(aTo, aNode), function(stanza) {
-          var items = [];
-          var elms = stanza.DOM.querySelectorAll('item');
-          for (var i = 0; i < elms.length; i++) {
-            var node = elms[i];
-            var item = {
-              id: node.getAttribute('id'),
-              name: node.querySelector('title').textContent,
-              src: node.querySelector('content').getAttribute('src'),
-              type: node.querySelector('content').getAttribute('type'),
-            }
-            var miniature = node.querySelector('link');
-            if (miniature)
-              item.miniature = miniature.getAttribute('href');
-            items.push(item);
-          };
+          var items = stanza.DOM.querySelectorAll('item') || [];
           stanza.items = items;
-
-          if (aResult)
-            aResult(stanza);
-        }, aError);
+          if (aOnSuccess)
+            aOnSuccess(stanza);
+        }, aOnError);
       },
       create: function(aTo, aNode, aFields, aResult, aError) {
         this.send(Lightstring.stanzas.pubsub.create(aTo, aNode, aFields), aResult, aError);
