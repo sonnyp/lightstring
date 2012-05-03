@@ -34,8 +34,14 @@
       getConfig: function(aTo, aNode) {
         return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><configure node='" + aNode + "'/></pubsub></iq>";
       },
-      items: function(aTo, aNode) {
-        return  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><items node='" + aNode + "'/></pubsub></iq>";
+      items: function(aTo, aNode, aItems) {
+        var stanza =  "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><items node='" + aNode + "'>";
+        if (aItems) {
+          aItems.forEach(function(item) {
+            stanza += "<item id='" + item + "'/>"
+          });
+        }
+        return stanza + "</items></pubsub></iq>";
       },
       affiliations: function(aTo, aNode) {
         return "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><affiliations node='" + aNode + "'/></pubsub></iq>";
@@ -81,8 +87,8 @@
       },
     },
     methods: {
-      items: function(aTo, aNode, aOnSuccess, aOnError) {
-        this.send(Lightstring.stanzas.pubsub.items(aTo, aNode), function(stanza) {
+      items: function(aTo, aNode, aItems, aOnSuccess, aOnError) {
+        this.send(Lightstring.stanzas.pubsub.items(aTo, aNode, aItems), function(stanza) {
           var items = stanza.DOM.querySelectorAll('item') || [];
           stanza.items = items;
           if (aOnSuccess)
