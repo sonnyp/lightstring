@@ -5,7 +5,7 @@
     this.service = aService;
   };
   Lightstring.WebSocketConnection.prototype = new EventEmitter();
-  Lightstring.WebSocketConnection.prototype.connect = function() {
+  Lightstring.WebSocketConnection.prototype.open = function() {
     // Standard
     if (typeof(WebSocket) === 'function')
       this.socket = new WebSocket(this.service, 'xmpp');
@@ -19,25 +19,33 @@
     else
       return; //TODO: error
 
-    var Conn = this;
+    var that = this;
     this.socket.addEventListener('open', function() {
-    //FIXME: Opera/Safari WebSocket implementation doesn't support sub-protocol mechanism.
-    //if (this.protocol !== 'xmpp')
-      //return; //TODO: error
-      Conn.emit('open')
+      //FIXME: Opera/Safari WebSocket implementation doesn't support sub-protocol mechanism.
+      //if (this.protocol !== 'xmpp')
+        //return; //TODO: error
+      that.emit('open');
+
+      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
+      this.socket.send(stream);
+      var stanza = {
+        XML: stream
+      };
+      that.emit('out', stanza);
     });
     this.socket.addEventListener('error', function(e) {
-      Conn.emit('disconnecting', e.data);
+      that.emit('disconnecting', e.data);
       //TODO: error
     });
     this.socket.addEventListener('close', function(e) {
-      Conn.emit('disconnected', e.data);
+      that.emit('disconnected', e.data);
     });
     this.socket.addEventListener('message', function(e) {
-      Conn.emit('stanza', e.data);
+      that.emit('in', e.data);
     });
-  },
+  };
   Lightstring.WebSocketConnection.prototype.send = function(aStanza) {
     this.socket.send(aStanza);
-  }
+    that.emit('out', aStanza);
+  };
 })();
