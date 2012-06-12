@@ -150,46 +150,35 @@ Lightstring.Connection.prototype = {
     if (!this.service)
       return; //TODO: error
 
-    // Standard
-    if (typeof(WebSocket) === 'function')
-      this.socket = new WebSocket(this.service, 'xmpp');
-    // Safari
-    else if (typeof(WebSocket) === 'object')
-      this.socket = new WebSocket(this.service, 'xmpp');
-    // Old Gecko
-    else if (typeof(MozWebSocket) === 'function') {
-      this.socket = new MozWebSocket(this.service, 'xmpp');
+    function getProtocol(aURL) {
+      var a = document.createElement('a');
+      a.href = aURL;
+      return a.protocol.replace(':', '');
     }
-    // No known WebSocket support
-    else {
-      return; //TODO: error
-    }
+    var protocol = getProtocol(this.service);
 
-    var Conn = this;
-    this.socket.addEventListener('open', function() {
-      //FIXME: Opera/Safari WebSocket implementation doesn't support sub-protocol mechanism.
-      //if (this.protocol !== 'xmpp')
-        //return; //TODO: error
+    if (protocol.match('http'))
+      this.connection = new Lightstring.BOSHConnection(this.service);
+    else if (protocol.match('ws'))
+      this.connection = new Lightstring.WebSocketConnection(this.service);
 
-      var stream = Lightstring.stanzas.stream.open(Conn.jid.domain);
-      this.send(stream);
+    this.connection.connect();
+
+    var that = this;
+
+    this.connection.once('open', function() {
+      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
+      that.connection.send(stream);
       var stanza = {
         XML: stream
       };
-      Conn.emit('output', stanza);
+      that.emit('output', stanza);
     });
-    this.socket.addEventListener('error', function(e) {
-      Conn.emit('disconnecting', e.data);
-      //TODO: error
-    });
-    this.socket.addEventListener('close', function(e) {
-      Conn.emit('disconnected', e.data);
-    });
-    this.socket.addEventListener('message', function(e) {
-      var stanza = new Lightstring.Stanza(e.data);
+    this.connection.on('stanza', function(stanza) {
+      var stanza = new Lightstring.Stanza(stanza);
 
       //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
-      Conn.emit('input', stanza);
+      that.emit('input', stanza);
 
       if (!stanza.DOM)
         return;
@@ -205,49 +194,49 @@ Lightstring.Connection.prototype = {
           var nodes = stanza.DOM.getElementsByTagName('mechanism');
           for (var i = 0; i < nodes.length; i++)
             stanza.mechanisms.push(nodes[i].textContent);
-          Conn.emit('mechanisms', stanza);
+          that.emit('mechanisms', stanza);
         }
         //XMPP features
         else {
           //TODO: stanza.features
-          Conn.emit('features', stanza);
+          that.emit('features', stanza);
         }
       }
       else if (name === 'challenge') {
-        Conn.emit('challenge', stanza);
+        that.emit('challenge', stanza);
       }
       else if (name === 'failure') {
-        Conn.emit('failure', stanza);
+        that.emit('failure', stanza);
       }
       else if (name === 'success') {
-        Conn.emit('success', stanza);
+        that.emit('success', stanza);
       }
 
       //Iq callbacks
       else if (name === 'iq') {
         var payload = stanza.DOM.firstChild;
         if (payload)
-          Conn.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
+          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
 
         var id = stanza.DOM.getAttribute('id');
-        if (!(id && id in Conn.callbacks))
+        if (!(id && id in that.callbacks))
           return;
 
         var type = stanza.DOM.getAttribute('type');
         if (type !== 'result' && type !== 'error')
           return; //TODO: warning
 
-        var callback = Conn.callbacks[id];
+        var callback = that.callbacks[id];
         if (type === 'result' && callback.success)
-          callback.success.call(Conn, stanza);
+          callback.success.call(that, stanza);
         else if (type === 'error' && callback.error)
-          callback.error.call(Conn, stanza);
+          callback.error.call(that, stanza);
 
-        delete Conn.callbacks[id];
+        delete that.callbacks[id];
       }
 
       else if (name === 'presence' || name === 'message') {
-        Conn.emit(name, stanza);
+        that.emit(name, stanza);
       }
     });
   },
@@ -288,7 +277,7 @@ Lightstring.Connection.prototype = {
     //FIXME this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
     var fixme = Lightstring.DOM2XML(stanza.DOM);
     stanza.XML = fixme;
-    this.socket.send(fixme);
+    this.connection.send(fixme);
     this.emit('output', stanza);
   },
   /**
