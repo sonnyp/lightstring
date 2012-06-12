@@ -118,7 +118,7 @@ var Lightstring = {
 
 /**
  * @constructor Creates a new Lightstring connection
- * @param {String} [aService] The Websocket service URL.
+ * @param {String} [aService] The connection manager URL.
  * @memberOf Lightstring
  */
 Lightstring.Connection = function(aService) {
@@ -133,248 +133,188 @@ Lightstring.Connection = function(aService) {
    */
   this.callbacks = {};
 };
-Lightstring.Connection.prototype = {
-  /**
-   * @function Create and open a websocket then go though the XMPP authentification process.
-   * @param {String} [aJid] The JID (Jabber id) to use.
-   * @param {String} [aPassword] The associated password.
-   */
-  connect: function(aJid, aPassword) {
-    this.emit('connecting');
-    this.jid = new Lightstring.JID(aJid);
-    if (aPassword)
-      this.password = aPassword;
+Lightstring.Connection.prototype = new EventEmitter();
+/**
+ * @function Create and open a websocket then go though the XMPP authentification process.
+ * @param {String} [aJid] The JID (Jabber id) to use.
+ * @param {String} [aPassword] The associated password.
+ */
+Lightstring.Connection.prototype.connect = function(aJid, aPassword) {
+  this.emit('connecting');
+  this.jid = new Lightstring.JID(aJid);
+  if (aPassword)
+    this.password = aPassword;
 
-    if (!this.jid.bare)
-      return; //TODO: error
-    if (!this.service)
-      return; //TODO: error
+  if (!this.jid.bare)
+    return; //TODO: error
+  if (!this.service)
+    return; //TODO: error
 
-    function getProtocol(aURL) {
-      var a = document.createElement('a');
-      a.href = aURL;
-      return a.protocol.replace(':', '');
-    }
-    var protocol = getProtocol(this.service);
+  function getProtocol(aURL) {
+    var a = document.createElement('a');
+    a.href = aURL;
+    return a.protocol.replace(':', '');
+  }
+  var protocol = getProtocol(this.service);
 
-    if (protocol.match('http'))
-      this.connection = new Lightstring.BOSHConnection(this.service);
-    else if (protocol.match('ws'))
-      this.connection = new Lightstring.WebSocketConnection(this.service);
+  if (protocol.match('http'))
+    this.connection = new Lightstring.BOSHConnection(this.service);
+  else if (protocol.match('ws'))
+    this.connection = new Lightstring.WebSocketConnection(this.service);
 
-    this.connection.connect();
+  this.connection.open();
 
-    var that = this;
+  var that = this;
 
-    this.connection.once('open', function() {
-      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
-      that.connection.send(stream);
-      var stanza = {
-        XML: stream
-      };
-      that.emit('output', stanza);
-    });
-    this.connection.on('stanza', function(stanza) {
-      var stanza = new Lightstring.Stanza(stanza);
+  this.connection.once('open', function() {
+    that.emit('open');
+  });
+  this.connection.on('out', function(stanza) {
+    that.emit('out', stanza);
+  });
+  this.connection.on('in', function(stanza) {
+    var stanza = new Lightstring.Stanza(stanza);
 
-      //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
-      that.emit('input', stanza);
+    //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
+    that.emit('stanza', stanza);
 
-      if (!stanza.DOM)
-        return;
-
-      var name = stanza.DOM.localName;
-
-      //Authentication
-      //FIXME SASL mechanisms and XMPP features can be both in a stream:features
-      if (name === 'features') {
-        //SASL mechanisms
-        if (stanza.DOM.firstChild.localName === 'mechanisms') {
-          stanza.mechanisms = [];
-          var nodes = stanza.DOM.getElementsByTagName('mechanism');
-          for (var i = 0; i < nodes.length; i++)
-            stanza.mechanisms.push(nodes[i].textContent);
-          that.emit('mechanisms', stanza);
-        }
-        //XMPP features
-        else {
-          //TODO: stanza.features
-          that.emit('features', stanza);
-        }
-      }
-      else if (name === 'challenge') {
-        that.emit('challenge', stanza);
-      }
-      else if (name === 'failure') {
-        that.emit('failure', stanza);
-      }
-      else if (name === 'success') {
-        that.emit('success', stanza);
-      }
-
-      //Iq callbacks
-      else if (name === 'iq') {
-        var payload = stanza.DOM.firstChild;
-        if (payload)
-          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
-
-        var id = stanza.DOM.getAttribute('id');
-        if (!(id && id in that.callbacks))
-          return;
-
-        var type = stanza.DOM.getAttribute('type');
-        if (type !== 'result' && type !== 'error')
-          return; //TODO: warning
-
-        var callback = that.callbacks[id];
-        if (type === 'result' && callback.success)
-          callback.success.call(that, stanza);
-        else if (type === 'error' && callback.error)
-          callback.error.call(that, stanza);
-
-        delete that.callbacks[id];
-      }
-
-      else if (name === 'presence' || name === 'message') {
-        that.emit(name, stanza);
-      }
-    });
-  },
-  /**
-   * @function Send a message.
-   * @param {String|Object} aStanza The message to send.
-   * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
-   */
-  send: function(aStanza, aSuccess, aError) {
-    if (!(aStanza instanceof Lightstring.Stanza))
-      var stanza = new Lightstring.Stanza(aStanza);
-    else
-      var stanza = aStanza;
-
-    if (!stanza)
+    if (!stanza.DOM)
       return;
 
-    if (stanza.DOM.tagName === 'iq') {
-      var type = stanza.DOM.getAttribute('type');
-      if (type !== 'get' || type !== 'set')
-        ; //TODO: error
+    var name = stanza.DOM.localName;
 
-      var callback = {success: aSuccess, error: aError};
+    //Authentication
+    //FIXME SASL mechanisms and XMPP features can be both in a stream:features
+    if (name === 'features') {
+      //SASL mechanisms
+      if (stanza.DOM.firstChild.localName === 'mechanisms') {
+        stanza.mechanisms = [];
+        var nodes = stanza.DOM.getElementsByTagName('mechanism');
+        for (var i = 0; i < nodes.length; i++)
+          stanza.mechanisms.push(nodes[i].textContent);
+        that.emit('mechanisms', stanza);
+      }
+      //XMPP features
+      else {
+        //TODO: stanza.features
+        that.emit('features', stanza);
+      }
+    }
+    else if (name === 'challenge') {
+      that.emit('challenge', stanza);
+    }
+    else if (name === 'failure') {
+      that.emit('failure', stanza);
+    }
+    else if (name === 'success') {
+      that.emit('success', stanza);
+    }
+
+    //Iq callbacks
+    else if (name === 'iq') {
+      var payload = stanza.DOM.firstChild;
+      if (payload)
+        that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
 
       var id = stanza.DOM.getAttribute('id');
-      if (!id) {
-        var id = Lightstring.newId('sendiq:');
-        stanza.DOM.setAttribute('id', id);
-      }
-
-      this.callbacks[id] = callback;
-
-    }
-    else if (aSuccess || aError)
-      ; //TODO: warning (no callback without iq)
-
-
-    //FIXME this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
-    var fixme = Lightstring.DOM2XML(stanza.DOM);
-    stanza.XML = fixme;
-    this.connection.send(fixme);
-    this.emit('output', stanza);
-  },
-  /**
-   * @function Closes the XMPP stream and the socket.
-   */
-  disconnect: function() {
-    this.emit('disconnecting');
-    var stream = Lightstring.stanzas.stream.close();
-    this.socket.send(stream);
-    this.emit('XMLOutput', stream);
-    this.socket.close();
-  },
-  load: function() {
-    for (var i = 0; i < arguments.length; i++) {
-      var name = arguments[i];
-      if (!(name in Lightstring.plugins))
-        continue; //TODO: error
-
-      var plugin = Lightstring.plugins[name];
-
-      //Namespaces
-      for (var ns in plugin.namespaces)
-        Lightstring.ns[ns] = plugin.namespaces[ns];
-
-      //Stanzas
-      Lightstring.stanzas[name] = {};
-      for (var stanza in plugin.stanzas)
-        Lightstring.stanzas[name][stanza] = plugin.stanzas[stanza];
-
-      //Handlers
-      for (var handler in plugin.handlers)
-        this.on(handler, plugin.handlers[handler]);
-
-      //Methods
-      this[name] = {};
-      for (var method in plugin.methods)
-        this[name][method] = plugin.methods[method].bind(this);
-
-      if (plugin.init)
-        plugin.init.apply(this);
-    }
-  },
-  /**
-   * @function Emits an event.
-   * @param {String} aName The event name.
-   * @param {Function|Array|Object} [aData] Data about the event.
-   */
-  emit: function(aName, aData) {
-    var handlers = this.handlers[aName];
-    if (!handlers)
-      return;
-
-    //Non-data events
-    if(!aData) {
-      for (var i = 0; i < handlers.length; i++)
-        handlers[i].call(this, aData);
-
-      return;
-    }
-
-    //Non-iq events
-    if (aData && aData.DOM && aData.DOM.localName !== 'iq') {
-      for (var i = 0; i < handlers.length; i++)
-        handlers[i].call(this, aData);
-
-      return;
-    }
-
-    //Iq events
-    var ret;
-    for (var i = 0; i < handlers.length; i++) {
-      ret = handlers[i].call(this, aData);
-      if (typeof ret !== 'boolean')
-        return; //TODO: error
-
-      if (ret)
-        return;
-    }
-
-    if (aData && aData.DOM) {
-      var type = aData.DOM.getAttribute('type');
-      if (type !== 'get' && type !== 'set')
+      if (!(id && id in that.callbacks))
         return;
 
-      var from = aData.DOM.getAttribute('from');
-      var id = aData.DOM.getAttribute('id');
-      this.send(Lightstring.stanzas.errors.iq(from, id, 'cancel', 'service-unavailable'));
+      var type = stanza.DOM.getAttribute('type');
+      if (type !== 'result' && type !== 'error')
+        return; //TODO: warning
+
+      var callback = that.callbacks[id];
+      if (type === 'result' && callback.success)
+        callback.success.call(that, stanza);
+      else if (type === 'error' && callback.error)
+        callback.error.call(that, stanza);
+
+      delete that.callbacks[id];
     }
-  },
-  /**
-   * @function Register an event handler.
-   * @param {String} aName The event name.
-   * @param {Function} aCallback The callback to call when the event is emitted.
-   */
-  on: function(aName, callback) {
-    if (!this.handlers[aName])
-      this.handlers[aName] = [];
-    this.handlers[aName].push(callback);
+
+    else if (name === 'presence' || name === 'message') {
+      that.emit(name, stanza);
+    }
+  });
+};
+/**
+ * @function Send a message.
+ * @param {String|Object} aStanza The message to send.
+ * @param {Function} [aCallback] Executed on answer. (stanza must be iq)
+ */
+Lightstring.Connection.prototype.send = function(aStanza, aSuccess, aError) {
+  if (!(aStanza instanceof Lightstring.Stanza))
+    var stanza = new Lightstring.Stanza(aStanza);
+  else
+    var stanza = aStanza;
+
+  if (!stanza)
+    return;
+
+  if (stanza.DOM.tagName === 'iq') {
+    var type = stanza.DOM.getAttribute('type');
+    if (type !== 'get' || type !== 'set')
+      ; //TODO: error
+
+    var callback = {success: aSuccess, error: aError};
+
+    var id = stanza.DOM.getAttribute('id');
+    if (!id) {
+      var id = Lightstring.newId('sendiq:');
+      stanza.DOM.setAttribute('id', id);
+    }
+
+    this.callbacks[id] = callback;
+
+  }
+  else if (aSuccess || aError)
+    ; //TODO: warning (no callback without iq)
+
+
+  //FIXME this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
+  var fixme = Lightstring.DOM2XML(stanza.DOM);
+  stanza.XML = fixme;
+  this.connection.send(fixme);
+  this.emit('output', stanza);
+};
+/**
+ * @function Closes the XMPP stream and the socket.
+ */
+Lightstring.Connection.prototype.disconnect = function() {
+  this.emit('disconnecting');
+  var stream = Lightstring.stanzas.stream.close();
+  this.socket.send(stream);
+  this.emit('XMLOutput', stream);
+  this.socket.close();
+};
+Lightstring.Connection.prototype.load = function() {
+  for (var i = 0; i < arguments.length; i++) {
+    var name = arguments[i];
+    if (!(name in Lightstring.plugins))
+      continue; //TODO: error
+
+    var plugin = Lightstring.plugins[name];
+
+    //Namespaces
+    for (var ns in plugin.namespaces)
+      Lightstring.ns[ns] = plugin.namespaces[ns];
+
+    //Stanzas
+    Lightstring.stanzas[name] = {};
+    for (var stanza in plugin.stanzas)
+      Lightstring.stanzas[name][stanza] = plugin.stanzas[stanza];
+
+    //Handlers
+    for (var handler in plugin.handlers)
+      this.on(handler, plugin.handlers[handler]);
+
+    //Methods
+    this[name] = {};
+    for (var method in plugin.methods)
+      this[name][method] = plugin.methods[method].bind(this);
+
+    if (plugin.init)
+      plugin.init.apply(this);
   }
 };
