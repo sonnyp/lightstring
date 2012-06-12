@@ -1,3 +1,7 @@
+Implemented transports
+  BOSH
+  WebSocket
+
 Known support
   Browser:
     Firefox
@@ -21,6 +25,10 @@ References
   XMPP over WebSocket:
     http://tools.ietf.org/html/draft-moffitt-xmpp-over-websocket-00
     http://blog.superfeedr.com/xmpp-over-websockets/
+  BOSH:
+    http://xmpp.org/extensions/xep-0124.html
+  XMPP over BOSH:
+    http://xmpp.org/extensions/xep-0206.html
 
 Similar/related software
   Server-side:
