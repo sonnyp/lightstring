@@ -51,11 +51,11 @@ Lightstring.plugins['roster'] = {
     }
   },
   methods: {
-    'get': function(aSuccess, aError) {
+    'get': function(aOnSuccess, aOnError) {
       this.send(Lightstring.stanzas.roster.get(), function(stanza) {
         var contacts = [];
 
-        var items = stanza.DOM.getElementsByTagName('item');
+        var items = stanza.el.getElementsByTagName('item');
 
         for (var i = 0; i < items.length; i++) {
           var item = items[i];
@@ -87,9 +87,9 @@ Lightstring.plugins['roster'] = {
           contacts: contacts
         };
 
-        if (aSuccess)
-          aSuccess(stanza);
-      }, aError);
+        if (aOnSuccess)
+          aOnSuccess(stanza);
+      }, aOnError);
     }
   }
 };

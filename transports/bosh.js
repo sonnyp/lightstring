@@ -54,20 +54,19 @@
     //   }
     // }
 
-    var body = '<body rid="' + this.rid++ + '"  xmlns="http://jabber.org/protocol/httpbind"/>';
-    var body = Lightstring.XML2DOM(body);
+    var body = new Lightstring.Stanza('<body rid="' + this.rid++ + '"  xmlns="http://jabber.org/protocol/httpbind"/>');
 
     //sid
     if (this.sid)
-      body.setAttribute('sid', this.sid);
+      body.el.setAttribute('sid', this.sid);
 
     //attributes on body
     for (var i in attrs)
-      body.setAttribute(i, attrs[i]);
+      body.el.setAttribute(i, attrs[i]);
 
     //children
     for (var i in children)
-      body.appendChild(children[i]);
+      body.el.appendChild(children[i]);
 
 
 
@@ -99,7 +98,7 @@
 
       var body = this.response;
       that.emit('rawin', body);
-      var bodyEl = Lightstring.XML2DOM(body);
+      var bodyEl = Lightstring.parse(body);
       that.processResponse(bodyEl)
       if (aOnSuccess)
         aOnSuccess(bodyEl);
@@ -117,14 +116,15 @@
     //   }
     // });
     // this.emit('rawout', body.toString());
-
-    for(var i = 0; i < body.children.length; i++) {
-      var child = body.children[i];
-      that.emit('out', child);
+    if (body.children) {
+      for(var i = 0; i < body.children.length; i++) {
+        var child = body.children[i];
+        that.emit('out', child);
+      }
     }
-    this.emit('rawout', Lightstring.DOM2XML(body))
+    this.emit('rawout', body);
 
-    req.send(Lightstring.DOM2XML(body));
+    req.send(Lightstring.serialize(body));
     this.currentRequests++;
   };
   Lightstring.BOSHConnection.prototype.send = function(aData) {
@@ -134,7 +134,7 @@
 
     else if(typeof aData == 'string') {
       try {
-        var el = Lightstring.XML2DOM(aData);
+        var el = Lightstring.parse(aData);
       }
       catch(e) {
         console.log(e);

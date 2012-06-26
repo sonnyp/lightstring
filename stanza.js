@@ -23,16 +23,13 @@
  * @memberOf Lightstring
  */
 Lightstring.Stanza = function(aStanza) {
-  if (typeof aStanza === 'string') {
-    this.XML = aStanza;
-    this.DOM = Lightstring.XML2DOM(this.XML);
-  }
-  else if (aStanza instanceof Element) {
-    this.DOM = aStanza;
-    this.XML = Lightstring.DOM2XML(this.DOM);
-  }
-  //ToDo error ?
-  else {
-    return null;
-  }
+  if (typeof aStanza === 'string')
+    this.el = Lightstring.parse(aStanza);
+  else if (aStanza instanceof Element)
+    this.el = aStanza;
+  else
+    this.el = null;//TODO error
+};
+Lightstring.Stanza.prototype.toString = function() {
+  return Lightstring.serialize(this.el);
 };

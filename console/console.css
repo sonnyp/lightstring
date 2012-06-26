@@ -1,0 +1,44 @@
+html, body {
+  width: 100%;
+  height: 100%;
+}
+body {
+  margin: 0;
+  /*FIXME: delete me*/
+  overflow: hidden;
+}
+.entry {
+  width: 100%;
+  margin-bottom: 15px;
+}
+.entry pre {
+  margin: 0;
+}
+#entries {
+  overflow: auto;
+  height: -webkit-calc(100% - (30px + 100px));
+  height: -moz-calc(100% - (30px + 100px));
+}
+#toolbar {
+  width: 100%;
+  height: 30px;
+}
+#input {
+  height: 100px;
+  width: 100%;
+}
+#input textarea {
+  /*border: none;*/
+  padding: 0;
+  resize: none;
+  width: -webkit-calc(100% - 80px);
+  width: -moz-calc(100% - 80px);
+}
+#input input {
+  width: 65px;
+}
+#input > * {
+  display: inline-block;
+  height: 100%;
+  vertical-align: top;
+}

@@ -21,7 +21,15 @@
 //Presence// http://xmpp.org/rfcs/rfc6121.html#presence
 ////////////
 (function() {
-  var legal_types = ['error', 'probe', 'subscribe', 'subscribed', 'unavailable', 'unsubscribe', 'unsubscribed'];
+  var legal_types = [
+    'error',
+    'probe',
+    'subscribe',
+    'subscribed',
+    'unavailable',
+    'unsubscribe',
+    'unsubscribed'
+  ];
 
   Lightstring.plugins['presence'] = {
     stanzas: {

@@ -28,7 +28,7 @@ Lightstring.JID = function(aJID) {
   this.resource = null;
 
   if (aJID)
-    this.full = aJID;
+    this.full = aJID.toString();
 
   //TODO: use a stringprep library to validate the input.
 };
@@ -91,6 +91,7 @@ Lightstring.JID.prototype = {
   },
 
   set full(aJID) {
+
     if (!aJID)
       return;
 

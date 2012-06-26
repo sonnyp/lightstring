@@ -19,13 +19,47 @@
 //////
 //IM//
 //////
-Lightstring.plugins['message'] = {
+Lightstring.plugins['im'] = {
   stanzas: {
-    normalMessage: function(aTo, aSubject, aText) {
-      return "<message type='normal' to='" + aTo + "'><subject>" + aSubject + "</subject><body>" + aText + "</body></message>";
+    normal: function(aTo, aSubject, aText) {
+      return(
+        "<message type='normal' to='" + aTo + "'>" +
+          "<subject>" + aSubject + "</subject>" +
+          "<body>" + aText + "</body>" +
+        "</message>"
+      );
     },
-    chatMessage: function(aTo, aText) {
-      return "<message type='chat' to='" + aTo + "'><body>" + aText + "</body></message>";
-    }
+    chat: function(aTo, aText, aReceipt) {
+      var message = Lightstring.parse(
+        "<message type='chat' to='" + aTo + "'>" +
+          "<body>" + aText + "</body>" +
+        "</message>"
+      );
+
+      if (aReceipt) {
+        var receipt = document.createElement('request');
+        receipt.setAttribute('xmlns', 'urn:xmpp:receipts');
+        message.appendChild(receipt);
+        message.setAttribute('id', Lightstring.newId());
+      }
+
+      return message;
+    },
+    received: function(aTo, aId) {
+      var message = Lightstring.parse(
+        "<message to='" + aTo + "'>" +
+          "<received xmlns='urn:xmpp:receipts' id='" + aId + "'/>" +
+        "</message>"
+      );
+      return message;
+    },
+    read: function(aTo, aId) {
+      var message = Lightstring.parse(
+        "<message to='" + aTo + "'>" +
+          "<read xmlns='urn:xmpp:receipts' id='" + aId + "'/>" +
+        "</message>"
+      );
+      return message;
+    },
   }
 };

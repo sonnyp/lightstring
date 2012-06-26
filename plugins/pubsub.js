@@ -44,7 +44,13 @@
         return stanza + "</items></pubsub></iq>";
       },
       affiliations: function(aTo, aNode) {
-        return "<iq type='get' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'><affiliations node='" + aNode + "'/></pubsub></iq>";
+        return(
+          "<iq type='get' to='" + aTo + "'>" +
+            "<pubsub xmlns='" + Lightstring.ns.pubsub_owner + "'>" +
+              "<affiliations node='" + aNode + "'/>" +
+            "</pubsub>" +
+          "</iq>"
+        );
       },
       publish: function(aTo, aNode, aItem, aId) {
         return  "<iq type='set' to='" + aTo + "'><pubsub xmlns='" + Lightstring.ns.pubsub + "'><publish node='" + aNode + "'><item id='" + aId + "'>" + aItem + "</item></publish></pubsub></iq>";

@@ -1,23 +1,17 @@
 'use strict';
 
 (function() {
-  Lightstring.WebSocketConnection = function(aService) {
+  Lightstring.WebSocket = WebSocket || MozWebSocket || undefined;
+  Lightstring.WebSocketConnection = function(aService, aJid) {
     this.service = aService;
+    this.jid = aJid;
   };
   Lightstring.WebSocketConnection.prototype = new EventEmitter();
   Lightstring.WebSocketConnection.prototype.open = function() {
-    // Standard
-    if (typeof(WebSocket) === 'function')
-      this.socket = new WebSocket(this.service, 'xmpp');
-    // Safari
-    else if (typeof(WebSocket) === 'object')
-      this.socket = new WebSocket(this.service, 'xmpp');
-    // Old Gecko
-    else if (typeof(MozWebSocket) === 'function')
-      this.socket = new MozWebSocket(this.service, 'xmpp');
-    // No WebSocket support
-    else
+    if(!Lightstring.WebSocket)
       return; //TODO: error
+
+    this.socket = new WebSocket(this.service, 'xmpp');
 
     var that = this;
     this.socket.addEventListener('open', function() {
@@ -27,11 +21,11 @@
       that.emit('open');
 
       var stream = Lightstring.stanzas.stream.open(that.jid.domain);
-      this.socket.send(stream);
-      var stanza = {
-        XML: stream
-      };
-      that.emit('out', stanza);
+      var stanza = new Lightstring.Stanza();
+      stanza.toString = function() {
+        return stream;
+      }
+      that.send(stanza);
     });
     this.socket.addEventListener('error', function(e) {
       that.emit('disconnecting', e.data);
@@ -41,11 +35,12 @@
       that.emit('disconnected', e.data);
     });
     this.socket.addEventListener('message', function(e) {
-      that.emit('in', e.data);
+      var stanza = new Lightstring.Stanza(e.data);
+      that.emit('in', stanza);
     });
   };
   Lightstring.WebSocketConnection.prototype.send = function(aStanza) {
-    this.socket.send(aStanza);
-    that.emit('out', aStanza);
+    this.emit('out', aStanza);
+    this.socket.send(aStanza.toString());
   };
 })();

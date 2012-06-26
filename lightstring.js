@@ -72,16 +72,17 @@ var Lightstring = {
    * @param {String} aString XML string.
    * @return {Object} Domified XML.
    */
-  XML2DOM: function(aString) {
-    var DOM = null;
+  parse: function(aString) {
+    var el = null;
+    //FIXME webkit doesn't throw an error when the parsing fails
     try {
-      DOM = this.parser.parseFromString(aString, 'text/xml').documentElement;
+      el = this.parser.parseFromString(aString, 'text/xml').documentElement;
     }
     catch (e) {
       //TODO: error
     }
     finally {
-      return DOM;
+      return el;
     };
   },
   /**
@@ -89,16 +90,16 @@ var Lightstring = {
    * @param {Object} aString DOM object.
    * @return {String} Stringified DOM.
    */
-  DOM2XML: function(aElement) {
-    var XML = null;
+  serialize: function(aElement) {
+    var string = null;
     try {
-      XML = this.serializer.serializeToString(aElement);
+      string = this.serializer.serializeToString(aElement);
     }
     catch (e) {
       //TODO: error
     }
     finally {
-      return XML;
+      return string;
     };
   },
   /**
@@ -122,6 +123,10 @@ var Lightstring = {
  * @memberOf Lightstring
  */
 Lightstring.Connection = function(aService) {
+  var that = this;
+  window.addEventListener('message', function(e) {
+    that.send(e.data.send)
+  });
   if (aService)
     this.service = aService;
   /**
@@ -158,9 +163,9 @@ Lightstring.Connection.prototype.connect = function(aJid, aPassword) {
   var protocol = getProtocol(this.service);
 
   if (protocol.match('http'))
-    this.connection = new Lightstring.BOSHConnection(this.service);
+    this.connection = new Lightstring.BOSHConnection(this.service, this.jid);
   else if (protocol.match('ws'))
-    this.connection = new Lightstring.WebSocketConnection(this.service);
+    this.connection = new Lightstring.WebSocketConnection(this.service, this.jid);
 
   this.connection.open();
 
@@ -173,54 +178,56 @@ Lightstring.Connection.prototype.connect = function(aJid, aPassword) {
     that.emit('out', stanza);
   });
   this.connection.on('in', function(stanza) {
-    var stanza = new Lightstring.Stanza(stanza);
-
     //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
     that.emit('stanza', stanza);
 
-    if (!stanza.DOM)
+    if (!stanza.el)
       return;
 
-    var name = stanza.DOM.localName;
+    var el = stanza.el;
 
     //Authentication
     //FIXME SASL mechanisms and XMPP features can be both in a stream:features
-    if (name === 'features') {
-      //SASL mechanisms
-      if (stanza.DOM.firstChild.localName === 'mechanisms') {
-        stanza.mechanisms = [];
-        var nodes = stanza.DOM.getElementsByTagName('mechanism');
-        for (var i = 0; i < nodes.length; i++)
-          stanza.mechanisms.push(nodes[i].textContent);
-        that.emit('mechanisms', stanza);
+    if (el.localName === 'features') {
+      var children = el.childNodes;
+      for (var i = 0, length = children.length; i < length; i++) {
+        //SASL mechanisms
+        if(children[i].localName === 'mechanisms') {
+          stanza.mechanisms = [];
+          var nodes = el.getElementsByTagName('mechanism');
+          for (var i = 0; i < nodes.length; i++)
+            stanza.mechanisms.push(nodes[i].textContent);
+          that.emit('mechanisms', stanza);
+          return;
+        }
       }
       //XMPP features
-      else {
+      // else {
         //TODO: stanza.features
         that.emit('features', stanza);
-      }
+      // }
     }
-    else if (name === 'challenge') {
+    else if (el.localName === 'challenge') {
       that.emit('challenge', stanza);
     }
-    else if (name === 'failure') {
+    else if (el.localName === 'failure') {
       that.emit('failure', stanza);
     }
-    else if (name === 'success') {
+    else if (el.localName === 'success') {
       that.emit('success', stanza);
     }
 
     //Iq callbacks
-    else if (name === 'iq') {
-      var payload = stanza.DOM.firstChild;
+    else if (el.localName === 'iq') {
+      var payload = el.firstChild;
       if (payload)
         that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
 
-      var id = stanza.DOM.getAttribute('id');
+      var id = el.getAttribute('id');
       if (!(id && id in that.callbacks))
         return;
 
-      var type = stanza.DOM.getAttribute('type');
+      var type = el.getAttribute('type');
       if (type !== 'result' && type !== 'error')
         return; //TODO: warning
 
@@ -233,7 +240,7 @@ Lightstring.Connection.prototype.connect = function(aJid, aPassword) {
       delete that.callbacks[id];
     }
 
-    else if (name === 'presence' || name === 'message') {
+    else if (el.localName === 'presence' || el.localName === 'message') {
       that.emit(name, stanza);
     }
   });
@@ -252,17 +259,17 @@ Lightstring.Connection.prototype.send = function(aStanza, aSuccess, aError) {
   if (!stanza)
     return;
 
-  if (stanza.DOM.tagName === 'iq') {
-    var type = stanza.DOM.getAttribute('type');
+  if (stanza.el.tagName === 'iq') {
+    var type = stanza.el.getAttribute('type');
     if (type !== 'get' || type !== 'set')
       ; //TODO: error
 
     var callback = {success: aSuccess, error: aError};
 
-    var id = stanza.DOM.getAttribute('id');
+    var id = stanza.el.getAttribute('id');
     if (!id) {
       var id = Lightstring.newId('sendiq:');
-      stanza.DOM.setAttribute('id', id);
+      stanza.el.setAttribute('id', id);
     }
 
     this.callbacks[id] = callback;
@@ -271,12 +278,7 @@ Lightstring.Connection.prototype.send = function(aStanza, aSuccess, aError) {
   else if (aSuccess || aError)
     ; //TODO: warning (no callback without iq)
 
-
-  //FIXME this.socket.send(stanza.XML); (need some work on Lightstring.Stanza)
-  var fixme = Lightstring.DOM2XML(stanza.DOM);
-  stanza.XML = fixme;
-  this.connection.send(fixme);
-  this.emit('output', stanza);
+  this.connection.send(stanza.toString());
 };
 /**
  * @function Closes the XMPP stream and the socket.
@@ -285,7 +287,7 @@ Lightstring.Connection.prototype.disconnect = function() {
   this.emit('disconnecting');
   var stream = Lightstring.stanzas.stream.close();
   this.socket.send(stream);
-  this.emit('XMLOutput', stream);
+  this.emit('out', stream);
   this.socket.close();
 };
 Lightstring.Connection.prototype.load = function() {
