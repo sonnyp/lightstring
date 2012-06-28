@@ -33,3 +33,36 @@ Lightstring.Stanza = function(aStanza) {
 Lightstring.Stanza.prototype.toString = function() {
   return Lightstring.serialize(this.el);
 };
+
+Object.defineProperty(Lightstring.Stanza.prototype, "from", {
+  get : function(){
+    return this.el.getAttribute('from');
+  },  
+  // set : function(newValue){ bValue = newValue; },  
+  enumerable : true,  
+  configurable : true
+});
+Object.defineProperty(Lightstring.Stanza.prototype, "name", {
+  get : function(){
+    return this.el.localName;
+  },  
+  // set : function(newValue){ bValue = newValue; },  
+  enumerable : true,  
+  configurable : true
+});
+Object.defineProperty(Lightstring.Stanza.prototype, "id", {
+  get : function(){
+    return this.el.getAttribute('id');
+  },  
+  // set : function(newValue){ bValue = newValue; },  
+  enumerable : true,  
+  configurable : true
+});
+Object.defineProperty(Lightstring.Stanza.prototype, "to", {
+  get : function(){
+    return this.el.getAttribute('to');
+  },  
+  // set : function(newValue){ bValue = newValue; },  
+  enumerable : true,  
+  configurable : true
+});
