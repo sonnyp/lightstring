@@ -33,12 +33,13 @@ Lightstring.plugins['PLAIN'] = {
         return;
 
       var token = btoa(
-        this.jid +
+        this.jid.bare +
         '\u0000' +
-        this.jid.node +
+        this.jid.local +
         '\u0000' +
         this.password
       );
+
       this.send(
         "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
              " mechanism='PLAIN'>" + token + "</auth>"
@@ -56,7 +57,7 @@ Lightstring.plugins['PLAIN'] = {
       var Conn = this;
       //TODO check if bind supported
       var bind =
-        "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
+        "<iq type='set' id='" + Lightstring.id() + "'>" +
           "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
             (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
           "</bind>" +
@@ -68,7 +69,7 @@ Lightstring.plugins['PLAIN'] = {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
           Conn.jid = new Lightstring.JID(stanza.el.textContent);
           Conn.send(
-            "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
+            "<iq type='set' id='" + Lightstring.id() + "'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
             "</iq>",
             function() {

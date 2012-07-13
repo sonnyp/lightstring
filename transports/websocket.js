@@ -1,23 +1,33 @@
 'use strict';
 
 (function() {
-  Lightstring.WebSocket = WebSocket || MozWebSocket || undefined;
-  Lightstring.WebSocketConnection = function(aService, aJid) {
+  var WebSocket = window.WebSocket || window.MozWebSocket || undefined;
+
+  if (typeof define !== 'undefined') {
+    define(function() {
+      return WebSocketTransport;
+    });
+  }
+  else {
+    Lightstring.WebSocketTransport = WebSocketTransport;
+  }
+
+  var WebSocketTransport = function(aService, aJid) {
     this.service = aService;
     this.jid = aJid;
   };
-  Lightstring.WebSocketConnection.prototype = new EventEmitter();
-  Lightstring.WebSocketConnection.prototype.open = function() {
-    if(!Lightstring.WebSocket)
+  WebSocketTransport.prototype = new EventEmitter();
+  WebSocketTransport.prototype.open = function() {
+    if(!WebSocket)
       return; //TODO: error
 
     this.socket = new WebSocket(this.service, 'xmpp');
 
     var that = this;
     this.socket.addEventListener('open', function() {
-      //FIXME: Opera/Safari WebSocket implementation doesn't support sub-protocol mechanism.
-      //if (this.protocol !== 'xmpp')
-        //return; //TODO: error
+      if (this.protocol !== 'xmpp')
+        ; //TODO: warning (Opera and Safari doesn't support this property)
+
       that.emit('open');
 
       var stream = Lightstring.stanzas.stream.open(that.jid.domain);
@@ -39,8 +49,9 @@
       that.emit('in', stanza);
     });
   };
-  Lightstring.WebSocketConnection.prototype.send = function(aStanza) {
+  WebSocketTransport.prototype.send = function(aStanza) {
     this.emit('out', aStanza);
     this.socket.send(aStanza.toString());
   };
+
 })();

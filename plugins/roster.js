@@ -73,6 +73,10 @@ Lightstring.plugins['roster'] = {
           if (subscription)
             contact.subscription = subscription;
 
+          var ask = item.getAttribute('ask');
+          if (ask)
+            contact.ask = ask;
+
           var groups = item.getElementsByTagName('group');
           if(groups) {
             contact.groups = [];

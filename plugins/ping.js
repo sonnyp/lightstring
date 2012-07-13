@@ -49,3 +49,19 @@ Lightstring.plugins['ping'] = {
     }
   }
 }
+Object.defineProperties(Lightstring.Stanza.prototype, {
+  'ping': {
+    get : function() {
+      return !!(this.el.querySelector('ping'));
+    },
+    set: function(aBool) {
+      if (this.ping)
+        return;
+
+      var pingEl = Lightstring.doc.createElementNS(Lightstring.ns.ping, 'ping');
+      this.el.appendChild(pingEl);
+    },
+    enumerable : true,  
+    configurable : true
+  },
+});

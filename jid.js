@@ -16,14 +16,28 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+//https://tools.ietf.org/html/rfc6122
+
+(function() {
+
+
+  if (typeof define !== 'undefined') {
+  define(function() {
+    //return an object to define the "my/shirt" module.
+    return JID;
+  });
+}
+else {
+  Lightstring.JID = JID;
+}
 
 /**
  * @constructor Creates a new JID object.
  * @param {String} [aJID] The host, bare or full JID.
  * @memberOf Lightstring
  */
-Lightstring.JID = function(aJID) {
-  this.node = null;
+var JID = function(aJID) {
+  this.local = null;
   this.domain = null;
   this.resource = null;
 
@@ -33,7 +47,7 @@ Lightstring.JID = function(aJID) {
   //TODO: use a stringprep library to validate the input.
 };
 
-Lightstring.JID.prototype = {
+JID.prototype = {
   toString: function() {
     return this.full;
   },
@@ -42,7 +56,7 @@ Lightstring.JID.prototype = {
     if (!(aJID instanceof Lightstring.JID))
       aJID = new Lightstring.JID(aJID);
 
-    return (this.node === aJID.node &&
+    return (this.local === aJID.local &&
             this.domain === aJID.domain &&
             this.resource === aJID.resource)
   },
@@ -51,8 +65,8 @@ Lightstring.JID.prototype = {
     if (!this.domain)
       return null;
 
-    if (this.node)
-      return this.node + '@' + this.domain;
+    if (this.local)
+      return this.local + '@' + this.domain;
 
     return this.domain;
   },
@@ -67,10 +81,10 @@ Lightstring.JID.prototype = {
 
     s = aJID.indexOf('@');
     if (s == -1) {
-      this.node = null;
+      this.local = null;
       this.domain = aJID;
     } else {
-      this.node = aJID.substring(0, s);
+      this.local = aJID.substring(0, s);
       this.domain = aJID.substring(s+1);
     }
   },
@@ -81,8 +95,8 @@ Lightstring.JID.prototype = {
 
     var full = this.domain;
 
-    if (this.node)
-      full = this.node + '@' + full;
+    if (this.local)
+      full = this.local + '@' + full;
 
     if (this.resource)
       full = full + '/' + this.resource;
@@ -105,11 +119,13 @@ Lightstring.JID.prototype = {
 
     s = aJID.indexOf('@');
     if (s == -1) {
-      this.node = null;
+      this.local = null;
       this.domain = aJID;
     } else {
-      this.node = aJID.substring(0, s);
+      this.local = aJID.substring(0, s);
       this.domain = aJID.substring(s+1);
     }
   }
 };
+})();
+

@@ -45,21 +45,31 @@ Lightstring.plugins['im'] = {
 
       return message;
     },
-    received: function(aTo, aId) {
-      var message = Lightstring.parse(
-        "<message to='" + aTo + "'>" +
-          "<received xmlns='urn:xmpp:receipts' id='" + aId + "'/>" +
-        "</message>"
-      );
-      return message;
-    },
-    read: function(aTo, aId) {
-      var message = Lightstring.parse(
-        "<message to='" + aTo + "'>" +
-          "<read xmlns='urn:xmpp:receipts' id='" + aId + "'/>" +
-        "</message>"
-      );
-      return message;
-    },
   }
 };
+Object.defineProperties(Lightstring.Stanza.prototype, {
+  'body': {
+    get : function(){
+      var bodyEl = this.el.querySelector('body');
+      if (!bodyEl)
+        return null;
+
+      return bodyEl.textContent;
+    },  
+    // set : function(newValue){ bValue = newValue; },  
+    enumerable : true,  
+    configurable : true
+  },
+  'subject': {
+    get : function(){
+      var subjectEl = this.el.querySelector('subject');
+      if (!subjectEl)
+        return null;
+
+      return subjectEl.textContent;
+    },
+    // set : function(newValue){ bValue = newValue; },  
+    enumerable : true,  
+    configurable : true
+  }
+});

@@ -16,53 +16,246 @@
   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
+(function() {
+
+if (typeof define !== 'undefined') {
+  define(function() {
+    return {
+      'stanza': Stanza,
+      'presence': Presence,
+      'iq': IQ,
+      'message': Message,
+      'doc': doc,
+    };
+  });
+}
+else {
+  Lightstirng.Stanza = Stanza;
+  Lightstirng.Presence = Presence;
+  Lightstirng.IQ = IQ;
+  Lightstirng.Message = Message;
+  Lightstirng.doc = doc;
+}
+
+/**
+ * @private
+ */
+var doc = document.implementation.createDocument(null, 'dummy', null);
+/**
+ * @private
+ */
+var parser = new DOMParser();
+/**
+ * @private
+ */
+var serializer = new XMLSerializer();
+/**
+ * @function Transforms a XML string to a DOM object.
+ * @param {String} aString XML string.
+ * @return {Object} Domified XML.
+ */
+var parse = function(aString) {
+  var el = parser.parseFromString(aString, 'text/xml').documentElement;
+  if (el.tagName === 'parsererror')
+    ;//do something
+  return el;
+};
+/**
+ * @function Transforms a DOM object to a XML string.
+ * @param {Object} aString DOM object.
+ * @return {String} Stringified DOM.
+ */
+var serialize = function(aElement) {
+  var string = null;
+  try {
+    string = serializer.serializeToString(aElement);
+  }
+  catch (e) {
+    //TODO: error
+  }
+  finally {
+    return string;
+  };
+};
+
 
 /**
  * @constructor Creates a new Stanza object.
  * @param {String|Object} [aStanza] The XML or DOM content of the stanza
- * @memberOf Lightstring
  */
-Lightstring.Stanza = function(aStanza) {
-  if (typeof aStanza === 'string')
-    this.el = Lightstring.parse(aStanza);
+var Stanza = function(aStanza) {
+  this.createEl(aStanza);
+};
+/**
+ * @constructor Creates a new Message stanza object.
+ * @param {String|Object} [aStanza] The XML or DOM content of the stanza
+ */
+ var Message = function(aStanza) {
+  if ((typeof aStanza === 'object') && (!(aStanza instanceof Element)))
+    aStanza.name = 'message';
+  this.createEl(aStanza);
+};
+Message.prototype = Stanza.prototype;
+/**
+ * @constructor Creates a new IQ stanza object.
+ * @param {String|Object} [aStanza] The XML or DOM content of the stanza
+ */
+var IQ = function(aStanza) {
+  if ((typeof aStanza === 'object') && (!(aStanza instanceof Element)))
+    aStanza.name = 'iq';
+  this.createEl(aStanza);
+};
+IQ.prototype = Stanza.prototype;
+/**
+ * @constructor Creates a new Presence stanza object.
+ * @param {String|Object} [aStanza] The XML or DOM content of the stanza
+ */
+var Presence = function(aStanza) {
+  if ((typeof aStanza === 'object') && (!(aStanza instanceof Element)))
+    aStanza.name = 'presence';
+  this.createEl(aStanza);
+};
+Presence.prototype = Stanza.prototype;
+Stanza.prototype.createEl = function(aStanza) {
+  if (typeof aStanza === 'string') {
+    this.el = parse(aStanza);
+  }
   else if (aStanza instanceof Element)
     this.el = aStanza;
+  else if (typeof aStanza === 'object') {
+    var el = doc.createElement(aStanza.name);
+    this.el = el;
+    delete aStanza.name;
+    for (var i in aStanza) {
+      this[i] = aStanza[i];
+    }
+  }
   else
     this.el = null;//TODO error
 };
-Lightstring.Stanza.prototype.toString = function() {
-  return Lightstring.serialize(this.el);
+Stanza.prototype.toString = function() {
+  return serialize(this.el);
+};
+Stanza.prototype.reply = function(aProps) {
+  var props = aProps || {};
+
+  props.name = this.name;
+  var reply = new Stanza(props);
+
+  if (this.from)
+    reply.to = this.from;
+
+
+  if (reply.name !== 'iq')
+    return reply;
+
+  if (this.id)
+    reply.id = this.id;
+
+  reply.type = 'result';
+
+  return reply;
 };
 
-Object.defineProperty(Lightstring.Stanza.prototype, "from", {
+//from attribute
+Object.defineProperty(Stanza.prototype, "from", {
   get : function(){
     return this.el.getAttribute('from');
   },  
-  // set : function(newValue){ bValue = newValue; },  
+  set : function(aString) {
+    this.el.setAttribute('from', aString);
+  },  
   enumerable : true,  
   configurable : true
 });
-Object.defineProperty(Lightstring.Stanza.prototype, "name", {
+//stanza tag name
+Object.defineProperty(Stanza.prototype, "name", {
   get : function(){
     return this.el.localName;
-  },  
+  },
+  //FIXME
   // set : function(newValue){ bValue = newValue; },  
   enumerable : true,  
   configurable : true
 });
-Object.defineProperty(Lightstring.Stanza.prototype, "id", {
+//id attribute
+Object.defineProperty(Stanza.prototype, "id", {
   get : function(){
     return this.el.getAttribute('id');
   },  
-  // set : function(newValue){ bValue = newValue; },  
+  set : function(aString) {
+    this.el.setAttribute('id', aString);
+  }, 
   enumerable : true,  
   configurable : true
 });
-Object.defineProperty(Lightstring.Stanza.prototype, "to", {
+//to attribute
+Object.defineProperty(Stanza.prototype, "to", {
   get : function(){
     return this.el.getAttribute('to');
   },  
-  // set : function(newValue){ bValue = newValue; },  
+  set : function(aString) {
+    this.el.setAttribute('to', aString);
+  },
   enumerable : true,  
   configurable : true
 });
+//type attribute
+Object.defineProperty(Stanza.prototype, "type", {
+  get : function(){
+    return this.el.getAttribute('type');
+  },
+  set : function(aString) {
+    this.el.setAttribute('type', aString);
+  },
+  enumerable : true,  
+  configurable : true
+});
+//body
+Object.defineProperty(Stanza.prototype, "body", {
+  get : function(){
+    var bodyEl = this.el.querySelector('body').textContent;
+    if (!bodyEl)
+      return null;
+    else
+      return bodyEl.textContent;
+  },
+  set : function(aString) {
+    var bodyEl = this.el.querySelector('body');
+    if (!bodyEl) {
+      bodyEl = doc.createElement('body');
+      bodyEl = this.el.appendChild(bodyEl);
+    }
+    bodyEl.textContent = aString;
+  },
+  enumerable : true,  
+  configurable : true
+});
+//subject
+Object.defineProperty(Stanza.prototype, "subject", {
+  get : function(){
+    var subjectEl = this.el.querySelector('subject').textContent;
+    if (!subjectEl)
+      return null;
+    else
+      return subjectEl.textContent;
+  },
+  set : function(aString) {
+    var subjectEl = this.el.querySelector('subject');
+    if (!subjectEl) {
+      subjectEl = doc.createElement('subject');
+      subjectEl = this.el.appendChild(subjectEl);
+    }
+    subjectEl.textContent = aString;
+  },
+  enumerable : true,  
+  configurable : true
+});
+Stanza.prototype.replyWithSubscribed = function(aProps) {
+  var reply = this.reply(aProps);
+  reply.type = 'subscribed';
+
+  return reply;
+};
+
+})();

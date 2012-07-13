@@ -1,74 +1,79 @@
 'use strict';
 
 (function() {
-  Lightstring.BOSHConnection = function(aService) {
+
+  if (typeof define !== 'undefined') {
+    define(function() {
+      return BOSHTransport;
+    });
+  }
+  else {
+    Lightstring.BOSHTransport = BOSHTransport;
+  }
+
+  var BOSHTransport = function(aService, aJID) {
     this.service = aService;
     this.rid = 1337;
+    this.jid = aJID;
     this.currentRequests = 0;
     this.maxHTTPRetries = 5;
     this.maxRequests = 2;
     this.queue = [];
   };
-  Lightstring.BOSHConnection.prototype = new EventEmitter();
-  Lightstring.BOSHConnection.prototype.open = function() {
+  BOSHTransport.prototype = new EventEmitter();
+  BOSHTransport.prototype.open = function() {
     var that = this;
 
     var attrs = {
       wait: '60',
       hold: '1',
-      to: 'yuilop',
+      to: this.jid.domain,
       content: 'text/xml; charset=utf-8',
       ver: '1.6',
       'xmpp:version': '1.0',
       'xmlns:xmpp': 'urn:xmpp:xbosh',
     };
 
-    this.request(attrs, null, function(data) {
+    this.request(attrs, [], function(data) {
       that.emit('open');
       that.sid = data.getAttribute('sid');
       that.maxRequests = data.getAttribute('maxRequests') || that.maxRequests;
+      if (!data.getElementsByTagNameNS('http://etherx.jabber.org/streams', 'features')[0]) {
+        that.request();
+      }
     });
 
 
     this.on('in', function(stanza) {
-      if (stanza.localName === 'success') {
+      if (stanza.name === 'success') {
         that.request({
+          'to': that.jid.domain,
           'xmpp:restart': 'true',
           'xmlns:xmpp': 'urn:xmpp:xbosh'
         })
       }
     })
   };
-  Lightstring.BOSHConnection.prototype.request = function(attrs, children, aOnSuccess, aOnError, aRetry) {
-    // if (children && children[0] && children[0].name === 'body') {
-    //   var body = children[0];
-    // }
-    // else {
-    //   var body = new ltx.Element('body');
-    //   if (children) {
-    //     if(util.isArray(children))
-    //       for (var k in children)
-    //         body.cnode(children[k]);
-    //     else
-    //       body.cnode(children);
-    //   }
-    // }
+  BOSHTransport.prototype.request = function(attrs, children, aOnSuccess, aOnError, aRetry) {
+    if (!children)
+      children = [];
 
-    var body = new Lightstring.Stanza('<body rid="' + this.rid++ + '"  xmlns="http://jabber.org/protocol/httpbind"/>');
+    var body = Lightstring.doc.createElement('body');
+    body.setAttribute('rid', this.rid++);
+    body.setAttribute('xmlns', 'http://jabber.org/protocol/httpbind');
 
     //sid
     if (this.sid)
-      body.el.setAttribute('sid', this.sid);
+      body.setAttribute('sid', this.sid);
 
     //attributes on body
     for (var i in attrs)
-      body.el.setAttribute(i, attrs[i]);
+      body.setAttribute(i, attrs[i]);
 
     //children
-    for (var i in children)
-      body.el.appendChild(children[i]);
-
-
+    for (var i = 0, length = children.length; i < length; i++) {
+      body.appendChild(children[i]);
+    };
 
     var retry = aRetry || 0;
 
@@ -87,7 +92,6 @@
     // req.addEventListener("abort", transferCanceled, false);
 
     var that = this;
-    // req.responseType = 'document';
     req.addEventListener("load", function() {
       if (req.status < 200 || req.status >= 400) {
         that.emit('error', "HTTP status " + req.status);
@@ -99,7 +103,7 @@
       var body = this.response;
       that.emit('rawin', body);
       var bodyEl = Lightstring.parse(body);
-      that.processResponse(bodyEl)
+      that.processResponse(bodyEl);
       if (aOnSuccess)
         aOnSuccess(bodyEl);
 
@@ -116,18 +120,21 @@
     //   }
     // });
     // this.emit('rawout', body.toString());
-    if (body.children) {
-      for(var i = 0; i < body.children.length; i++) {
-        var child = body.children[i];
-        that.emit('out', child);
+    if (body.childNodes) {
+      for(var i = 0; i < body.childNodes.length; i++) {
+        var child = body.childNodes[i];
+        that.emit('out', new Lightstring.Stanza(child));
       }
     }
-    this.emit('rawout', body);
 
-    req.send(Lightstring.serialize(body));
+    var bodyStr = Lightstring.serialize(body);
+
+    this.emit('rawout', bodyStr);
+
+    req.send(bodyStr);
     this.currentRequests++;
   };
-  Lightstring.BOSHConnection.prototype.send = function(aData) {
+  BOSHTransport.prototype.send = function(aData) {
     if (!aData) {
       var el = '';
     }
@@ -152,7 +159,7 @@
     setTimeout(this.mayRequest.bind(this), 0)
 
   };
-  Lightstring.BOSHConnection.prototype.end = function(stanzas) {
+  BOSHTransport.prototype.end = function(stanzas) {
       var that = this;
 
       stanzas = stanzas || [];
@@ -168,21 +175,23 @@
           delete that.sid;
       });
   };
-  Lightstring.BOSHConnection.prototype.processResponse = function(bodyEl) {
-    if (bodyEl && bodyEl.children) {
-      for(var i = 0; i < bodyEl.children.length; i++) {
-        var child = bodyEl.children[i];
-        this.emit('in', child);
+  BOSHTransport.prototype.processResponse = function(bodyEl) {
+    var children = bodyEl.childNodes
+    if (children.length) {
+      for(var i = 0; i < children.length; i++) {
+        var child = children[i];
+        var stanza = new Lightstring.Stanza(child);
+        this.emit('in', stanza);
       }
     }
-    if (bodyEl && bodyEl.getAttribute('type') === 'terminate') {
+    else if (bodyEl.getAttribute('type') === 'terminate') {
       var condition = bodyEl.getAttribute('condition');
       this.emit('error',
         new Error(condition || "Session terminated"));
       this.emit('close');
     }
   };
-  Lightstring.BOSHConnection.prototype.mayRequest = function() {
+  BOSHTransport.prototype.mayRequest = function() {
     var canRequest =
       this.sid && (this.currentRequests === 0 || ((this.queue.length > 0 && this.currentRequests < this.maxRequests))
     );
@@ -192,7 +201,6 @@
 
     var stanzas = this.queue;
     this.queue = [];
-    //~ this.rid++;
 
     var that = this;
     this.request({}, stanzas,
@@ -200,12 +208,12 @@
       function(data) {
         //if (data)
           //that.processResponse(data);
-
         setTimeout(that.mayRequest.bind(that), 0);
 
       },
       //error
       function(error) {
+        console.log('error')
         that.emit('error', error);
         that.emit('close');
         delete that.sid;

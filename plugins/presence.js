@@ -40,6 +40,9 @@
           if (object.type && legal_types.indexOf(object.type) !== -1)
             attributs += " type='" + object.type + "'";
 
+          if (object.to)
+            attributs += " to='" + object.to + "'";
+
           if (object.priority)
             payloads += "<priority>" + object.priority + "</priority>";
 
@@ -65,6 +68,30 @@
       send: function(aObject) {
         this.send(Lightstring.stanzas.presence.out(aObject));
       }
-    }
+    },
   };
+
+  Object.defineProperties(Lightstring.Stanza.prototype, {
+    'show': {
+      get : function() {
+        return this.el.getAttribute('show');
+      },
+      enumerable : true,  
+      configurable : true
+    },
+    'priority': {
+      get : function() {
+        return this.el.getAttribute('priority');
+      },
+      enumerable : true,  
+      configurable : true
+    },
+    'status': {
+      get : function() {
+        return this.el.getAttribute('status');
+      },
+      enumerable : true,  
+      configurable : true
+    },
+  })
 })();
