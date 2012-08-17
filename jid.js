@@ -61,6 +61,12 @@ JID.prototype = {
             this.resource === aJID.resource)
   },
 
+  toBare: function() {
+    var aJID = this;
+    aJID.resource = null;
+    return aJID;
+  },
+
   get bare() {
     if (!this.domain)
       return null;
@@ -121,7 +127,8 @@ JID.prototype = {
     if (s == -1) {
       this.local = null;
       this.domain = aJID;
-    } else {
+    }
+    else {
       this.local = aJID.substring(0, s);
       this.domain = aJID.substring(s+1);
     }
