@@ -2,15 +2,6 @@
 
 (function() {
 
-  if (typeof define !== 'undefined') {
-    define(function() {
-      return BOSHTransport;
-    });
-  }
-  else {
-    Lightstring.BOSHTransport = BOSHTransport;
-  }
-
   var BOSHTransport = function(aService, aJID) {
     this.service = aService;
     this.rid = 1337;
@@ -220,4 +211,5 @@
       }
     );
   };
+  Lightstring.BOSHTransport = BOSHTransport;
 })();

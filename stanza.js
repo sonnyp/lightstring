@@ -18,25 +18,6 @@
 
 (function() {
 
-if (typeof define !== 'undefined') {
-  define(function() {
-    return {
-      'stanza': Stanza,
-      'presence': Presence,
-      'iq': IQ,
-      'message': Message,
-      'doc': doc,
-    };
-  });
-}
-else {
-  Lightstirng.Stanza = Stanza;
-  Lightstirng.Presence = Presence;
-  Lightstirng.IQ = IQ;
-  Lightstirng.Message = Message;
-  Lightstirng.doc = doc;
-}
-
 /**
  * @private
  */
@@ -50,18 +31,19 @@ var parser = new DOMParser();
  */
 var serializer = new XMLSerializer();
 /**
- * @function Transforms a XML string to a DOM object.
+ * @function Process a XML string to a DOM tree.
  * @param {String} aString XML string.
  * @return {Object} Domified XML.
  */
 var parse = function(aString) {
   var el = parser.parseFromString(aString, 'text/xml').documentElement;
   if (el.tagName === 'parsererror')
-    ;//do something
+    ;//FIXME: do something?
+
   return el;
 };
 /**
- * @function Transforms a DOM object to a XML string.
+ * @function Process a DOM treee to a XML string.
  * @param {Object} aString DOM object.
  * @return {String} Stringified DOM.
  */
@@ -257,5 +239,11 @@ Stanza.prototype.replyWithSubscribed = function(aProps) {
 
   return reply;
 };
+
+Lightstring.Stanza = Stanza;
+Lightstring.Presence = Presence;
+Lightstring.IQ = IQ;
+Lightstring.Message = Message;
+Lightstring.doc = doc;
 
 })();

@@ -3,15 +3,6 @@
 (function() {
   var WebSocket = window.WebSocket || window.MozWebSocket || undefined;
 
-  if (typeof define !== 'undefined') {
-    define(function() {
-      return WebSocketTransport;
-    });
-  }
-  else {
-    Lightstring.WebSocketTransport = WebSocketTransport;
-  }
-
   var WebSocketTransport = function(aService, aJid) {
     this.service = aService;
     this.jid = aJid;
@@ -53,5 +44,5 @@
     this.emit('out', aStanza);
     this.socket.send(aStanza.toString());
   };
-
+  Lightstring.WebSocketTransport = WebSocketTransport;
 })();

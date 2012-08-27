@@ -63,6 +63,9 @@
 
       document.addEventListener('DOMContentLoaded', this.initView);
     },
+    focusInput: function() {
+      document.querySelector('textarea').focus();
+    },
     initView: function() {
       Lightstring.console.holder.forEach(function(log) {
         Lightstring.console.log(log);
@@ -97,13 +100,29 @@
   };
 
   //Lightstring is defined in the parent window context
-  if (window.frameElement && window.parent.Lightstring) {
-    window.Lightstring = window.parent.Lightstring;
-    Lightstring.console = Console;
-    Lightstring.console.init();
+  if (window.frameElement && window.parent) {
+    var handleConsole = function() {
+      window.Lightstring = window.parent.Lightstring;
+      Lightstring.console = Console;
+      Lightstring.console.init();
+    };
+
+    if (window.parent.Lightstring)
+      handleConsole();
+    else {
+      if (window.parent.document.readyState !== 'complete') {
+        window.parent.document.addEventListener('DOMContentLoaded', function() {
+          handleConsole();
+        });
+      }
+      else
+        console.warn('You must add the Lightstring library to use this console.');
+    }
+
+
   }
   else {
     //TODO: link to a doc?
-    console.error('You must embed this in a iframe.');
+    console.warn('You must embed this in a iframe.');
   }
 })();

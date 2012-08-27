@@ -171,4 +171,51 @@
       });
     }
   };
+
+Object.defineProperties(Lightstring.Stanza.prototype, {
+  'queryDiscoInfo': {
+    get : function() {
+      var query = this.el.querySelector('query');
+      if (query && (query.getAttribute('xmlns') === Lightstring.ns['disco#info'])
+        return true;
+    },
+    set: function(aBool) {
+      var queryEl = Lightstring.doc.createElementNS(Lightstring.ns['disco#info'], 'query');
+      this.el.appendChild(queryEl);
+    },
+    enumerable : true,  
+    configurable : true
+  },
+});
+
+Object.defineProperties(Lightstring.Stanza.prototype, {
+  'infos': {
+    get : function() {
+      var query = this.el.querySelector('query');
+      if (!query || (query.getAttribute('xmlns') !== 'http://jabber.org/protocol/disco#info')
+        return false;
+
+      var info = {};
+      for (var i = 0, length = query.childNodes.length; i < length; i++) {
+        var child = query.childNodes[i];
+        if (info[child.tagName] === 'identity') {
+          info.identity = {};
+          console.log(child.attributes)
+        }
+
+
+      }
+    },
+    set: function(aBool) {
+      if (this.ping)
+        return;
+
+      var pingEl = Lightstring.doc.createElementNS(Lightstring.ns.ping, 'ping');
+      this.el.appendChild(pingEl);
+    },
+    enumerable : true,  
+    configurable : true
+  },
+});
+
 })();

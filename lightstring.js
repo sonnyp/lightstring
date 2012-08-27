@@ -17,19 +17,8 @@
 */
 
 (function() {
-  define(['./jid', './stanza', './transports/websocket.js', './transports/bosh.js'], function(JID, Stanza, WebSocketTransport, BOSHTransport) {
-    Lightstring.JID = JID;
-    Lightstring.Stanza = Stanza.stanza;
-    Lightstring.IQ = Stanza.iq;
-    Lightstring.doc = Stanza.doc;
-    Lightstring.Presence = Stanza.presence;
-    Lightstring.Message = Stanza.message;
-    Lightstring.BOSHTransport = BOSHTransport;
-    Lightstring.WebSocketTransport = WebSocketTransport;
-    return Lightstring;
-  });
 
-  var Lightstring = {
+  window.Lightstring = {
     /*
      * @namespace Holds XMPP namespaces.
      * @description http://xmpp.org/xmpp-protocols/protocol-namespaces
@@ -152,7 +141,7 @@
         that.emit('challenge', stanza);
       }
       else if (el.localName === 'failure') {
-        that.emit('failure', stanza);
+        that.emit('error', el.firstChild.tagName);
       }
       else if (el.localName === 'success') {
         that.emit('success', stanza);

@@ -24,10 +24,15 @@ Lightstring.plugins['roster'] = {
     roster: 'jabber:iq:roster'
   },
   stanzas: {
-    'get': function() {
-      return "<iq type='get'>" +
-               "<query xmlns='" + Lightstring.ns.roster + "'/>" +
-             "</iq>";
+    'get': function(aVer) {
+      return (
+        '<iq type="get">' +
+          '<query xmlns="' + Lightstring.ns.roster + '"' +
+            //http://xmpp.org/rfcs/rfc6121.html#roster-versioning
+            (typeof aVer === 'string' ? ' ver="' + aVer + '"' : '') +
+          '/>' +
+        '</iq>'
+      );
     },
     add: function(aAddress, aGroups) {
       var iq = "<iq type='set'>" +
@@ -51,9 +56,12 @@ Lightstring.plugins['roster'] = {
     }
   },
   methods: {
-    'get': function(aOnSuccess, aOnError) {
-      this.send(Lightstring.stanzas.roster.get(), function(stanza) {
+    'get': function(aVer, aOnSuccess, aOnError) {
+      this.send(Lightstring.stanzas.roster.get(aVer), function(stanza) {
         var contacts = [];
+
+        if (stanza.el.firstChild)
+          var ver = stanza.el.firstChild.getAttribute('ver');
 
         var items = stanza.el.getElementsByTagName('item');
 
@@ -90,6 +98,9 @@ Lightstring.plugins['roster'] = {
         stanza.roster = {
           contacts: contacts
         };
+
+        if (ver)
+          stanza.roster.ver = ver;
 
         if (aOnSuccess)
           aOnSuccess(stanza);

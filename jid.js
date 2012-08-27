@@ -20,17 +20,6 @@
 
 (function() {
 
-
-  if (typeof define !== 'undefined') {
-  define(function() {
-    //return an object to define the "my/shirt" module.
-    return JID;
-  });
-}
-else {
-  Lightstring.JID = JID;
-}
-
 /**
  * @constructor Creates a new JID object.
  * @param {String} [aJID] The host, bare or full JID.
@@ -134,5 +123,8 @@ JID.prototype = {
     }
   }
 };
+
+Lightstring.JID = JID;
+
 })();
 
