@@ -95,19 +95,19 @@
   };
   Lightstring.Connection.prototype = new EventEmitter();
   Lightstring.Connection.prototype.onTransportLoaded = function() {
-    this.transport.open();
-
     var that = this;
 
-    this.transport.once('open', function() {
+    this.transport.onOpen = function() {
       that.emit('open');
-    });
-    this.transport.on('out', function(stanza) {
+    };
+    this.transport.onOut = function(stanza) {
       setTimeout(function() {
         that.emit('out', stanza);
       }, 0);
-    });
-    this.transport.on('in', function(stanza) {
+    };
+    this.transport.onStanza = function(stanza) {
+      var stanza = new Lightstring.Stanza(stanza);
+
       //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
       that.emit('stanza', stanza);
 
@@ -173,6 +173,17 @@
       else if (el.localName === 'presence' || el.localName === 'message') {
         that.emit(name, stanza);
       }
+    }
+    this.transport.open(function(err) {
+      if (err)
+        ;//FIXME do something
+
+      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
+      var stanza = new Lightstring.Stanza();
+      stanza.toString = function() {
+        return stream;
+      }
+      that.transport.send(stanza);
     });
   };
   /**

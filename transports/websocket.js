@@ -3,46 +3,78 @@
 (function() {
   var WebSocket = window.WebSocket || window.MozWebSocket || undefined;
 
-  var WebSocketTransport = function(aService, aJid) {
+  var WebSocketTransport = function(aService) {
     this.service = aService;
-    this.jid = aJid;
   };
-  WebSocketTransport.prototype = new EventEmitter();
-  WebSocketTransport.prototype.open = function() {
+  /**
+   * @function Called whenever data are being received
+   * @param {String} aData The data
+   */
+  WebSocketTransport.prototype.onRawIn = function(aData) {};
+  /**
+   * @function Called whenever data are being sent
+   * @param {String} aData The data
+   */
+  WebSocketTransport.prototype.onRawOut = function(aData) {};
+  /**
+   * @function Called whenever a stanza is received
+   * @param {String} aStanza The stanza
+   */
+  WebSocketTransport.prototype.onStanza = function(aStanza) {};
+  /**
+   * @function Called whenever a stanza is sent
+   * @param {String} aStanza The stanza
+   */
+  WebSocketTransport.prototype.onOut = function(aStanza) {};
+  /**
+   * @function Called whenever an error occurs
+   * @param {Error} aError The error
+   */
+  WebSocketTransport.prototype.onError = function(aError) {};
+  /**
+   * @function Called whenever the transport is closed
+   */
+  WebSocketTransport.prototype.onClose = function() {};
+  /**
+   * @function Open the connection transport
+   */
+  WebSocketTransport.prototype.open = function(aCallback) {
     if(!WebSocket)
-      return; //TODO: error
+      return aCallback(new Error('WebSocket not supported.'));
 
     this.socket = new WebSocket(this.service, 'xmpp');
 
     var that = this;
     this.socket.addEventListener('open', function() {
+      var err = null;
+
       if (this.protocol !== 'xmpp')
-        ; //TODO: warning (Opera and Safari doesn't support this property)
+        err = new Error('XMPP protocol not supported by the WebSocket server.');
 
-      that.emit('open');
-
-      var stream = Lightstring.stanzas.stream.open(that.jid.domain);
-      var stanza = new Lightstring.Stanza();
-      stanza.toString = function() {
-        return stream;
-      }
-      that.send(stanza);
+      aCallback(err);
     });
     this.socket.addEventListener('error', function(e) {
-      that.emit('disconnecting', e.data);
-      //TODO: error
+      that.onError(e);
     });
     this.socket.addEventListener('close', function(e) {
-      that.emit('disconnected', e.data);
+      that.onClose(e);
     });
     this.socket.addEventListener('message', function(e) {
-      var stanza = new Lightstring.Stanza(e.data);
-      that.emit('in', stanza);
+      that.onRawIn(e.data);
+      that.onStanza(e.data);
     });
   };
-  WebSocketTransport.prototype.send = function(aStanza) {
-    this.emit('out', aStanza);
-    this.socket.send(aStanza.toString());
+  /**
+   * @function Send data
+   * @param {String} aData The data
+   */
+  WebSocketTransport.prototype.send = function(aData) {
+    var data = aData.toString();
+
+    this.socket.send(data);
+    this.onOut(data);
+    this.onRawOut(data);
   };
+
   Lightstring.WebSocketTransport = WebSocketTransport;
 })();
