@@ -196,14 +196,14 @@ Object.defineProperty(Stanza.prototype, "type", {
 //body
 Object.defineProperty(Stanza.prototype, "body", {
   get : function(){
-    var bodyEl = this.el.querySelector('body').textContent;
+    var bodyEl = this.el.getElementsByTagName('body')[0];
     if (!bodyEl)
       return null;
     else
       return bodyEl.textContent;
   },
   set : function(aString) {
-    var bodyEl = this.el.querySelector('body');
+    var bodyEl = this.el.getElementsByTagName('body')[0];
     if (!bodyEl) {
       bodyEl = doc.createElement('body');
       bodyEl = this.el.appendChild(bodyEl);

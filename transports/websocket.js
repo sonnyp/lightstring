@@ -46,7 +46,7 @@
 
     var that = this;
     this.socket.addEventListener('open', function() {
-      var err = null;
+      var err = undefined;
 
       if (this.protocol !== 'xmpp')
         err = new Error('XMPP protocol not supported by the WebSocket server.');

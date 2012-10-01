@@ -70,7 +70,7 @@
      * @return {String} Identifier.
      */
     id: function(aPrefix) {
-      return (aPrefix || '') + Date.now();
+      return (aPrefix || '') + Date.now() + Math.random();
     }
   };
 
@@ -95,6 +95,7 @@
   };
   Lightstring.Connection.prototype = new EventEmitter();
   Lightstring.Connection.prototype.onTransportLoaded = function() {
+
     var that = this;
 
     this.transport.onOpen = function() {
