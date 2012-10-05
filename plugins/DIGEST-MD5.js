@@ -51,7 +51,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
       var Conn = this;
       //TODO check if bind supported
       var bind =
-        "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
+        "<iq type='set' id='"+Lightstring.id('sendiq:')+"'>" +
           "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
             (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
           "</bind>" +
@@ -61,9 +61,9 @@ Lightstring.plugins['DIGEST-MD5'] = {
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          Conn.jid = new Lightstring.JID(stanza.DOM.textContent);
+          Conn.jid = new Lightstring.JID(stanza.el.textContent);
           Conn.send(
-            "<iq type='set' id='"+Lightstring.newId('sendiq:')+"'>" +
+            "<iq type='set' id='"+Lightstring.id('sendiq:')+"'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
             "</iq>",
             function() {
@@ -84,7 +84,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
         return '"' + str.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
       };
 
-      var challenge = atob(stanza.DOM.textContent);
+      var challenge = atob(stanza.el.textContent);
 
       var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
@@ -118,13 +118,13 @@ Lightstring.plugins['DIGEST-MD5'] = {
       var digest_uri = 'xmpp/' + this.jid.domain;
       if (host !== null)
           digest_uri = digest_uri + '/' + host;
-      var A1 = MD5.hash(this.jid.node +
+      var A1 = MD5.hash(this.jid.local +
                         ':' + realm + ':' + this.password) +
                         ':' + nonce + ':' + cnonce;
       var A2 = 'AUTHENTICATE:' + digest_uri;
 
       var responseText = '';
-      responseText += 'username=' + _quote(this.jid.node) + ',';
+      responseText += 'username=' + _quote(this.jid.local) + ',';
       responseText += 'realm=' + _quote(realm) + ',';
       responseText += 'nonce=' + _quote(nonce) + ',';
       responseText += 'cnonce=' + _quote(cnonce) + ',';
