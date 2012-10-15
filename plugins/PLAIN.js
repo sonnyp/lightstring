@@ -57,21 +57,21 @@ Lightstring.plugins['PLAIN'] = {
       var Conn = this;
       //TODO check if bind supported
       var bind =
-        "<iq type='set' id='" + Lightstring.id() + "'>" +
-          "<bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>" +
-            (this.jid.resource? "<resource>" + this.jid.resource + "</resource>": "") +
-          "</bind>" +
-        "</iq>";
+        '<iq type="set">' +
+          '<bind xmlns="urn:ietf:params:xml:ns:xmpp-bind">' +
+            (this.jid.resource ? ('<resource>' + this.jid.resource + '</resource>') : '') +
+          '</bind>' +
+        '</iq>';
       this.send(
         bind,
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          Conn.jid = new Lightstring.JID(stanza.el.textContent);
+          Conn.jid = new Lightstring.JID(stanza.getChild('bind').getChild('jid').text());
           Conn.send(
-            "<iq type='set' id='" + Lightstring.id() + "'>" +
-              "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
-            "</iq>",
+            '<iq type="set">' +
+              '<session xmlns="urn:ietf:params:xml:ns:xmpp-session"/>' +
+            '</iq>',
             function() {
               Conn.emit('connected');
             }

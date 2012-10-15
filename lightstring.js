@@ -34,25 +34,27 @@
     stanzas: {
       stream: {
         open: function(aService) {
-          return "<stream:stream to='" + aService + "'" +
-                               " xmlns='" + Lightstring.ns['jabber_client'] + "'" +
-                               " xmlns:stream='" + Lightstring.ns['streams'] + "'" +
-                               " version='1.0'>";
+          return (
+            '<stream:stream to="' + aService + '" ' +
+              'xmlns="' + Lightstring.ns['jabber_client'] + '" ' +
+              'xmlns:stream="' + Lightstring.ns['streams'] + '" ' +
+              'version="1.0">'
+          );
         },
         close: function() {
-          return "</stream:stream>";
+          return '</stream:stream>';
         }
       },
       errors: {
         iq: function(from, id, type, error) {
-          return "<iq to='" + from + "'" +
-                    " id='" + id + "'" +
-                    " type='error'>" +
-                   "<error type='" + type + "'>" +
-                     "<" + error + " xmlns='" + Lightstring.ns['xmpp_stanzas'] + "'/>" + //TODO: allow text content.
-                      //TODO: allow text and payload.
-                   "</error>" +
-                 "</iq>";
+          return (
+            '<iq to="' + from + '" id="' + id + '" type="error">' +
+               '<error type="' + type + '">' +
+                 '<' + error + ' xmlns="' + Lightstring.ns['xmpp_stanzas'] + '"/>' + //TODO: allow text content.
+                  //TODO: allow text and payload.
+               '</error>' +
+             '</iq>'
+          );
         }
       }
     },
@@ -101,6 +103,12 @@
     this.transport.onOpen = function() {
       that.emit('open');
     };
+    this.transport.onError = function(e) {
+      that.emit('error', e)
+    };
+    this.transport.onClose = function(e) {
+      that.emit('close', e)
+    };
     this.transport.onOut = function(stanza) {
       setTimeout(function() {
         that.emit('out', stanza);
@@ -110,57 +118,45 @@
       var stanza = new Lightstring.Stanza(stanza);
 
       //FIXME: node-xmpp-bosh sends a self-closing stream:stream tag; it is wrong!
+
       that.emit('stanza', stanza);
-
-      if (!stanza.el)
-        return;
-
-      var el = stanza.el;
 
       //Authentication
       //FIXME SASL mechanisms and XMPP features can be both in a stream:features
-      if (el.localName === 'features') {
-        var children = el.childNodes;
-        for (var i = 0, length = children.length; i < length; i++) {
+      if (stanza.name === 'stream:features') {
+        for (var i = 0, length = stanza.children.length; i < length; i++) {
           //SASL mechanisms
-          if(children[i].localName === 'mechanisms') {
+          if(stanza.children[i].name === 'mechanisms') {
+
             stanza.mechanisms = [];
-            var nodes = el.getElementsByTagName('mechanism');
+            var nodes = stanza.children[i].getChildren('mechanism');
             for (var i = 0; i < nodes.length; i++)
-              stanza.mechanisms.push(nodes[i].textContent);
+              stanza.mechanisms.push(nodes[i].text());
             that.emit('mechanisms', stanza);
             return;
           }
         }
-        //XMPP features
-        // else {
-          //TODO: stanza.features
-          that.emit('features', stanza);
-        // }
+        that.emit('features', stanza);
       }
-      else if (el.localName === 'challenge') {
+      else if (stanza.name === 'challenge') {
         that.emit('challenge', stanza);
       }
-      else if (el.localName === 'failure') {
-        that.emit('error', el.firstChild.tagName);
+      else if (stanza.name === 'failure') {
+        that.emit('error', stanza);
       }
-      else if (el.localName === 'success') {
+      else if (stanza.name === 'success') {
         that.emit('success', stanza);
       }
 
       //Iq callbacks
-      else if (el.localName === 'iq') {
-        var payload = el.firstChild;
-        if (payload)
-          that.emit('iq/' + payload.namespaceURI + ':' + payload.localName, stanza);
-
-        var id = el.getAttribute('id');
+      else if (stanza.name === 'iq') {
+        var id = stanza.attr('id');
         if (!(id && id in that.callbacks))
           return;
 
-        var type = el.getAttribute('type');
-        if (type !== 'result' && type !== 'error')
-          return; //TODO: warning
+        var type = stanza.attr('type');
+        // if (type !== 'result' && type !== 'error')
+        //   return; //TODO: warning
 
         var callback = that.callbacks[id];
         if (type === 'result' && callback.success)
@@ -171,7 +167,7 @@
         delete that.callbacks[id];
       }
 
-      else if (el.localName === 'presence' || el.localName === 'message') {
+      else if (stanza.name === 'presence' || stanza.name === 'message') {
         that.emit(name, stanza);
       }
     }
@@ -180,11 +176,7 @@
         ;//FIXME do something
 
       var stream = Lightstring.stanzas.stream.open(that.jid.domain);
-      var stanza = new Lightstring.Stanza();
-      stanza.toString = function() {
-        return stream;
-      }
-      that.transport.send(stanza);
+      that.transport.send(stream);
     });
   };
   /**
@@ -228,21 +220,18 @@
     else
       var stanza = aStanza;
 
-    if (!stanza)
-      return;
-
     if (stanza.name === 'iq') {
-      var type = stanza.type;
-      if (type !== 'get' || type !== 'set')
-        ; //TODO: error
+      // var type = stanza.attr('type');
+      // if (type !== 'get' || type !== 'set')
+      //   ; //TODO: error
 
       var callback = {success: aOnSuccess, error: aOnError};
 
-      var id = stanza.id;
+      var id = stanza.attr(id);
       if (!id)
-        stanza.id = Lightstring.id();
+        stanza.attr('id', Lightstring.id());
 
-      this.callbacks[stanza.id] = callback;
+      this.callbacks[stanza.attr('id')] = callback;
     }
     else if (aOnSuccess || aOnError)
       ; //TODO: warning (no callback without iq)

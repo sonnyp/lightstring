@@ -66,8 +66,9 @@ var serialize = function(aElement) {
  * @param {String|Object} [aStanza] The XML or DOM content of the stanza
  */
 var Stanza = function(aStanza) {
-  this.createEl(aStanza);
+  return this.createEl(aStanza);
 };
+// Stanza.prototype = Element.prototype;
 /**
  * @constructor Creates a new Message stanza object.
  * @param {String|Object} [aStanza] The XML or DOM content of the stanza
@@ -100,24 +101,25 @@ var Presence = function(aStanza) {
 Presence.prototype = Stanza.prototype;
 Stanza.prototype.createEl = function(aStanza) {
   if (typeof aStanza === 'string') {
-    this.el = parse(aStanza);
+    return parseTest(aStanza);
   }
   else if (aStanza instanceof Element)
-    this.el = aStanza;
-  else if (typeof aStanza === 'object') {
-    var el = doc.createElement(aStanza.name);
-    this.el = el;
-    delete aStanza.name;
-    for (var i in aStanza) {
-      this[i] = aStanza[i];
-    }
-  }
+    return aStanza;
+  // else if (typeof aStanza === 'object') {
+  //   var el = doc.createElement(aStanza.name);
+  //   this.el = el;
+  //   delete aStanza.name;
+  //   for (var i in aStanza) {
+  //     this[i] = aStanza[i];
+  //   }
+  // }
   else
-    this.el = null;//TODO error
+    return null;
 };
-Stanza.prototype.toString = function() {
-  return serialize(this.el);
-};
+// Stanza.prototype.toString = function() {
+//   return this.el.root().toString();
+//   // return serialize(this.el);this.el.root.toString();
+// };
 Stanza.prototype.reply = function(aProps) {
   var props = aProps || {};
 
@@ -150,16 +152,16 @@ Object.defineProperty(Stanza.prototype, "from", {
   enumerable : true,  
   configurable : true
 });
-//stanza tag name
-Object.defineProperty(Stanza.prototype, "name", {
-  get : function(){
-    return this.el.localName;
-  },
-  //FIXME
-  // set : function(newValue){ bValue = newValue; },  
-  enumerable : true,  
-  configurable : true
-});
+// //stanza tag name
+// Object.defineProperty(Stanza.prototype, "name", {
+//   get : function(){
+//     return this.el.localName;
+//   },
+//   //FIXME
+//   // set : function(newValue){ bValue = newValue; },  
+//   enumerable : true,  
+//   configurable : true
+// });
 //id attribute
 Object.defineProperty(Stanza.prototype, "id", {
   get : function(){
