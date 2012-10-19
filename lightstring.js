@@ -84,6 +84,7 @@
   Lightstring.Connection = function(aService) {
     if (aService)
       this.service = aService;
+
     /**
      * @namespace Holds connection events handlers
      */
@@ -187,6 +188,7 @@
   Lightstring.Connection.prototype.connect = function(aJid, aPassword) {
     this.emit('connecting');
     this.jid = new Lightstring.JID(aJid);
+
     if (aPassword)
       this.password = aPassword;
 
@@ -227,7 +229,7 @@
 
       var callback = {success: aOnSuccess, error: aOnError};
 
-      var id = stanza.attr(id);
+      var id = stanza.attr('id');
       if (!id)
         stanza.attr('id', Lightstring.id());
 
