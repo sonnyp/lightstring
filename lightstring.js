@@ -73,6 +73,29 @@
      */
     id: function(aPrefix) {
       return (aPrefix || '') + Date.now() + Math.random();
+    },
+    escape: function(s) {
+      if (!s)
+        return false;
+
+      return s.
+        replace(/\&/g, '&amp;').
+        replace(/</g, '&lt;').
+        replace(/>/g, '&gt;').
+        replace(/"/g, '&quot;').
+        replace(/'/g, '&apos;');
+    },
+    unescape: function(s) {
+      if (!s)
+        return false;
+
+      //FIXME android client doesn't escape URL correctly
+      return unescape(s.
+        replace(/&amp;/g, '&').
+        replace(/&lt;/g, '<').
+        replace(/&gt;/g, '>').
+        replace(/&quot;/g, '"').
+        replace(/&apos;/g, "'"));
     }
   };
 
