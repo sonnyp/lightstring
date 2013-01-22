@@ -1,14 +1,26 @@
 'use strict';
 
 (function() {
+
+  var entriesEl;
+
   var Console = {
     holder: [],
-    invertedScroll: true,
     log: function(aLog) {
       if (document.readyState !== 'complete') {
         this.holder.push(aLog);
         return;
       }
+
+      var entry = this.buildLogEntry(aLog);
+
+      var child = entriesEl.firstChild;
+      if(child)
+        entriesEl.insertBefore(entry, child);
+      else  
+        entriesEl.appendChild(entry)
+    },
+    buildLogEntry: function(aLog) {
       //beautify
       var stanza = vkbeautify.xml(aLog.data, 2, ' ');
       var entry = document.createElement('div');
@@ -27,13 +39,8 @@
       entry.appendChild(pre);
       //highlight
       hljs.highlightBlock(entry.children[1], null, false);
-      var entriesEl = document.querySelector('#entries')
 
-      var child = entriesEl.firstChild;
-      if(child)
-        entriesEl.insertBefore(entry, child);
-      else  
-        entriesEl.appendChild(entry)
+      return entry;
     },
     filter: function(aFilter) {
       var entries = document.querySelectorAll('.entry pre');
@@ -61,30 +68,32 @@
       if (document.readyState === 'complete')
         return this.initView();
 
-      document.addEventListener('DOMContentLoaded', this.initView);
+      var that = this;
+      document.addEventListener('DOMContentLoaded', function() {
+        that.initView()
+      });
     },
     focusInput: function() {
       document.querySelector('textarea').focus();
     },
     initView: function() {
-      Lightstring.console.holder.forEach(function(log) {
-        Lightstring.console.log(log);
-      });
+      for (var i = 0, length = this.holder.length; i < length; i++) {
+        Console.log(this.holder[i]);
+        delete this.holder[i];
+      };
 
 
-      var entriesEl = document.getElementById('entries');
-      Console.entriesEl = entriesEl;
-
+      entriesEl = document.getElementById('entries');
       document.getElementById('input').addEventListener('submit', function(e) {
         e.preventDefault();
-        Lightstring.console.send(this.elements['field'].value)
+        Console.send(this.elements['field'].value)
       });
       document.getElementById('clear').addEventListener('click', function(e) {
-        Lightstring.console.entriesEl.innerHTML = '';
+        entriesEl.innerHTML = '';
       });
       //FIXME allow xpath, xquery, E4X, whatever XML query syntax
       document.getElementById('filter').addEventListener('input', function(e) {
-        Lightstring.console.filter(this.value);
+        Console.filter(this.value);
       });
       document.getElementById('input').addEventListener('keypress', function(e) {
         if (e.keyCode === 13) {
@@ -118,8 +127,6 @@
       else
         console.warn('You must add the Lightstring library to use this console.');
     }
-
-
   }
   else {
     //TODO: link to a doc?
