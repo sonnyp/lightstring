@@ -192,7 +192,7 @@
       }
 
       else if (stanza.name === 'presence' || stanza.name === 'message') {
-        that.emit(name, stanza);
+        that.emit(stanza.name, stanza);
       }
     }
     this.transport.open(function(err) {

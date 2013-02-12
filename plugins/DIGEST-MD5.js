@@ -61,7 +61,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          Conn.jid = new Lightstring.JID(stanza.el.textContent);
+          Conn.jid = new Lightstring.JID(stanza.text());
           Conn.send(
             "<iq type='set' id='"+Lightstring.id('sendiq:')+"'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
@@ -84,7 +84,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
         return '"' + str.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
       };
 
-      var challenge = atob(stanza.el.textContent);
+      var challenge = atob(stanza.text());
 
       var attribMatch = /([a-z]+)=("[^"]+"|[^,"]+)(?:,|$)/;
 
