@@ -59,37 +59,34 @@ Lightstring.plugins['roster'] = {
     'get': function(aVer, aOnSuccess, aOnError) {
       this.send(Lightstring.stanzas.roster.get(aVer), function(stanza) {
         var contacts = [];
-
-        if (stanza.el.firstChild)
-          var ver = stanza.el.firstChild.getAttribute('ver');
-
-        var items = stanza.el.getElementsByTagName('item');
+        var query = stanza.getChild('query');
+        var items = query.getChildren('item');
 
         for (var i = 0; i < items.length; i++) {
           var item = items[i];
           var contact = {}
 
-          var jid = item.getAttribute('jid');
+          var jid = item.attrs.jid;
           if (jid)
             contact.jid = jid;
 
-          var name = item.getAttribute('name');
+          var name = item.attrs.name;
           if (name)
             contact.name = name;
 
-          var subscription = item.getAttribute('subscription');
+          var subscription = item.attrs.subscription;
           if (subscription)
             contact.subscription = subscription;
 
-          var ask = item.getAttribute('ask');
+          var ask = item.attrs.ask;
           if (ask)
             contact.ask = ask;
 
-          var groups = item.getElementsByTagName('group');
+          var groups = item.getChildren('group');
           if(groups) {
             contact.groups = [];
             for (var y = 0; y < groups.length; y++)
-              contact.groups.push(groups[y].textContent);
+              contact.groups.push(groups[y].text());
           }
 
           contacts.push(contact);
@@ -99,8 +96,8 @@ Lightstring.plugins['roster'] = {
           contacts: contacts
         };
 
-        if (ver)
-          stanza.roster.ver = ver;
+        if (query.attrs.ver)
+          stanza.roster.ver = query.attrs.ver;
 
         if (aOnSuccess)
           aOnSuccess(stanza);
