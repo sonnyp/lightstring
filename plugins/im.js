@@ -30,17 +30,13 @@ Lightstring.plugins['im'] = {
       );
     },
     chat: function(aTo, aText, aReceipt) {
-      var message = Lightstring.parse(
-        "<message type='chat' to='" + aTo + "'>" +
-          "<body>" + aText + "</body>" +
-        "</message>"
-      );
+      var message = new Element('message', {type: 'chat', to: aTo})
+        .c('body').t(aText).up();
 
       if (aReceipt) {
-        var receipt = document.createElement('request');
-        receipt.setAttribute('xmlns', 'urn:xmpp:receipts');
-        message.appendChild(receipt);
-        message.setAttribute('id', Lightstring.newId());
+        var receipt = new Element('request', {xmlns: 'urn:xmpp:receipts'});
+        message.getChild('body').c(receipt);
+        message.attr('id', Lightstring.id());
       }
 
       return message;
