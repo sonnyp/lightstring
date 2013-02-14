@@ -175,8 +175,11 @@
       //Iq callbacks
       else if (stanza.name === 'iq') {
         var id = stanza.attr('id');
-        if (!(id && id in that.callbacks))
+        if (!(id && id in that.callbacks)) {
+          // XXX: should we always emit the stanza?
+          that.emit('iq', stanza);
           return;
+        }
 
         var type = stanza.attr('type');
         // if (type !== 'result' && type !== 'error')
