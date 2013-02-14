@@ -61,7 +61,8 @@ Lightstring.plugins['DIGEST-MD5'] = {
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          Conn.jid = new Lightstring.JID(stanza.text());
+          var jid = stanza.getChild('bind').getChild('jid').text()
+          Conn.jid = new Lightstring.JID(jid);
           Conn.send(
             "<iq type='set' id='"+Lightstring.id('sendiq:')+"'>" +
               "<session xmlns='urn:ietf:params:xml:ns:xmpp-session'/>" +
