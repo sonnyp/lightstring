@@ -105,6 +105,8 @@
    * @memberOf Lightstring
    */
   Lightstring.Connection = function(aService) {
+    EventEmitter.apply(this);
+
     if (aService)
       this.service = aService;
 
@@ -119,7 +121,7 @@
 
     Lightstring.connections.push(this);
   };
-  Lightstring.Connection.prototype = new EventEmitter();
+  Lightstring.Connection.prototype = EventEmitter.extend();
   Lightstring.Connection.prototype.onTransportLoaded = function() {
 
     var that = this;
