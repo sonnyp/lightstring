@@ -58,10 +58,10 @@
     },
     init: function() {
       if (Lightstring.Connection) {
-        Lightstring.Connection.prototype.on('stanza', function(stanza) {
+        Lightstring.connections[0].on('stanza', function(stanza) {
           Lightstring.console.log({dir: 'in', data: stanza.toString()});
         });
-        Lightstring.Connection.prototype.on('out', function(stanza) {
+        Lightstring.connections[0].on('out', function(stanza) {
           Lightstring.console.log({dir: 'out', data: stanza.toString()});
         });
       }
