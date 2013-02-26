@@ -3,7 +3,6 @@
   <head>
     <title>Lightstring Example</title>
     <meta charset="UTF-8"/>
-    <script type="application/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>
     <script type="application/javascript" src="../Element.js"></script>
     <script type="application/javascript" src="../parser.js"></script>
     <script type="application/javascript" src="../lib/bind.js"></script>
@@ -23,10 +22,10 @@
     <div id="login" style="text-align: center">
       <form name="cred">
         <label for="jid">JID:</label>
-        <input type="text" id="jid" />
+        <input type="text" name="jid" />
         <label for="pass">Password:</label>
-        <input type="password" id="pass" />
-        <input type="submit" id="connect" value="connect" />
+        <input type="password" name="pass" />
+        <input type="submit" value="connect" />
       </form>
     </div>
     <hr />

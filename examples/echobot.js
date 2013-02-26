@@ -1,8 +1,14 @@
+'use strict';
+
+(function() {
+
 function log(msg) {
-  $('#log').append('<div></div>').append(document.createTextNode(msg));
+  var logEl = document.createElement('div');
+  logEl.textContent = msg;
+  document.getElementById('log').appendChild(logEl);
 }
 
-$(document).ready(function () {
+document.addEventListener('DOMContentLoaded', function() {
   var xmpp = new Lightstring.Connection('ws://localhost:5280');
   xmpp.load('DIGEST-MD5', 'presence', 'im');
 
@@ -31,11 +37,12 @@ $(document).ready(function () {
     oldEmit.apply(xmpp, arguments);
   }
 
-  $('form').submit(function() {
-    var jid = $('#jid').val();
-    var pass = $('#pass').val();
+  document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var jid = this.elements['jid'].value;
+    var pass = this.elements['pass'].value;
     xmpp.connect(jid, pass);
-    return false;
   });
 });
 
+})();
