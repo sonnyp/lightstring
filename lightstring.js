@@ -250,6 +250,10 @@
     else
       var stanza = aStanza;
 
+    if (!stanza.attrs.from) {
+      stanza.attrs.from = this.jid.full;
+    }
+
     if (stanza.name === 'iq') {
       // var type = stanza.attr('type');
       // if (type !== 'get' || type !== 'set')
