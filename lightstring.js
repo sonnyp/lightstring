@@ -75,8 +75,9 @@
       return (aPrefix || '') + Date.now() + Math.random();
     },
     escape: function(s) {
+      s = s.toString();
       if (!s)
-        return false;
+        return '';
 
       return s.
         replace(/\&/g, '&amp;').
@@ -86,8 +87,9 @@
         replace(/'/g, '&apos;');
     },
     unescape: function(s) {
+      s = s.toString();
       if (!s)
-        return false;
+        return '';
 
       //FIXME android client doesn't escape URL correctly
       return unescape(s.
