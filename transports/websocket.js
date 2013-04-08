@@ -65,6 +65,12 @@
     });
   };
   /**
+   * @function Close the transport
+   */
+  WebSocketTransport.prototype.close = function() {
+    this.socket.close();
+  };
+  /**
    * @function Send data
    * @param {String} aData The data
    */
