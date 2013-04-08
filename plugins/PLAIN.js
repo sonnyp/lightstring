@@ -74,6 +74,7 @@ Lightstring.plugins['PLAIN'] = {
             '</iq>',
             function() {
               Conn.emit('connected');
+              Conn.status = 'connected';
             }
           );
         },

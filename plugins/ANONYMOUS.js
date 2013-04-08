@@ -68,6 +68,7 @@ Lightstring.plugins['ANONYMOUS'] = {
             "</iq>",
             function() {
               Conn.emit('connected');
+              Conn.status = 'connected';
             }
           );
         },

@@ -121,6 +121,11 @@
      */
     this.callbacks = {};
 
+    /**
+     * @status Holds connection status
+     */
+    this.status = 'disconnected';
+
     Lightstring.connections.push(this);
   };
   Lightstring.Connection.prototype = EventEmitter.extend();
@@ -131,11 +136,12 @@
     this.transport.onOpen = function() {
       that.emit('open');
     };
-    this.transport.onError = function(e) {
-      that.emit('error', e)
+    this.transport.onError = function(e) {
+      that.emit('error', e);
     };
     this.transport.onClose = function(e) {
-      that.emit('close', e)
+      that.emit('close', e);
+      that.status = 'disconnected';
     };
     this.transport.onOut = function(stanza) {
       setTimeout(function() {

@@ -64,6 +64,7 @@ Lightstring.plugins['SCRAM-SHA-1'] = {
             "</iq>",
             function() {
               Conn.emit('connected');
+              Conn.status = 'connected';
             }
           );
         },

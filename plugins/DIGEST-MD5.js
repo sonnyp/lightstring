@@ -69,6 +69,7 @@ Lightstring.plugins['DIGEST-MD5'] = {
             "</iq>",
             function() {
               Conn.emit('connected');
+              Conn.status = 'connected';
             }
           );
         },
