@@ -41,14 +41,8 @@ Lightstring.addMechanism('PLAIN', function(conn) {
   );
 
   var that = this;
-  conn.addListener('stanza', function(stanza) {
-    if (stanza.name === 'challenge') {
-      that.onChallenge(stanza, conn);
-    }
-    else if (stanza.name === 'failure') {
-      that.onFailure(stanza, conn);
-    }
-    else if (stanza.name === 'success') {
+  conn.addListener('stanza', function onStanza(stanza) {
+    if (stanza.name === 'success') {
       conn.send(
         "<stream:stream to='" + conn.jid.domain + "'" +
                       " xmlns='jabber:client'" +
@@ -77,6 +71,7 @@ Lightstring.addMechanism('PLAIN', function(conn) {
             function() {
               conn.emit('connected');
               conn.status = 'connected';
+              conn.removeListener('stanza', onStanza);
             }
           );
         },
