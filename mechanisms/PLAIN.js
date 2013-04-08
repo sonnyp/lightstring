@@ -26,55 +26,57 @@ References:
     http://tools.ietf.org/html/rfc4616
 */
 
-Lightstring.plugins['PLAIN'] = {
-  handlers: {
-    'mechanisms': function (stanza) {
-      if(stanza.mechanisms.indexOf('PLAIN') === -1)
-        return;
+Lightstring.addMechanism('PLAIN', function(conn) {
+  var token = btoa(
+    conn.jid.bare +
+    '\u0000' +
+    conn.jid.local +
+    '\u0000' +
+    conn.password
+  );
 
-      var token = btoa(
-        this.jid.bare +
-        '\u0000' +
-        this.jid.local +
-        '\u0000' +
-        this.password
-      );
+  conn.send(
+    "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
+         " mechanism='PLAIN'>" + token + "</auth>"
+  );
 
-      this.send(
-        "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
-             " mechanism='PLAIN'>" + token + "</auth>"
-      );
-    },
-    'success': function (stanza) {
-      this.send(
-        "<stream:stream to='" + this.jid.domain + "'" +
+  var that = this;
+  conn.addListener('stanza', function(stanza) {
+    if (stanza.name === 'challenge') {
+      that.onChallenge(stanza, conn);
+    }
+    else if (stanza.name === 'failure') {
+      that.onFailure(stanza, conn);
+    }
+    else if (stanza.name === 'success') {
+      conn.send(
+        "<stream:stream to='" + conn.jid.domain + "'" +
                       " xmlns='jabber:client'" +
                       " xmlns:stream='http://etherx.jabber.org/streams'" +
                       " version='1.0'/>"
       );
-    },
-    'features': function (stanza) {
-      var Conn = this;
+    }
+    else if (stanza.name === 'stream:features') {
       //TODO check if bind supported
       var bind =
         '<iq type="set">' +
           '<bind xmlns="urn:ietf:params:xml:ns:xmpp-bind">' +
-            (this.jid.resource ? ('<resource>' + this.jid.resource + '</resource>') : '') +
+            (conn.jid.resource ? ('<resource>' + conn.jid.resource + '</resource>') : '') +
           '</bind>' +
         '</iq>';
-      this.send(
+      conn.send(
         bind,
         //Success
         function(stanza) {
           //Session http://xmpp.org/rfcs/rfc3921.html#session
-          Conn.jid = new Lightstring.JID(stanza.getChild('bind').getChild('jid').text());
-          Conn.send(
+          conn.jid = new Lightstring.JID(stanza.getChild('bind').getChild('jid').text());
+          conn.send(
             '<iq type="set">' +
               '<session xmlns="urn:ietf:params:xml:ns:xmpp-session"/>' +
             '</iq>',
             function() {
-              Conn.emit('connected');
-              Conn.status = 'connected';
+              conn.emit('connected');
+              conn.status = 'connected';
             }
           );
         },
@@ -84,5 +86,5 @@ Lightstring.plugins['PLAIN'] = {
         }
       );
     }
-  }
-};
+  })
+});

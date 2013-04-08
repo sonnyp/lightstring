@@ -59,9 +59,9 @@
       }
     },
     /**
-     * @namespace Holds Lightstring plugins
+     * @namespace Holds SASL mechanisms handlers
      */
-    plugins: {},
+    mechanisms: {},
     /**
      * @private Holds the connections
      */
@@ -98,6 +98,9 @@
         replace(/&gt;/g, '>').
         replace(/&quot;/g, '"').
         replace(/&apos;/g, "'"));
+    },
+    addMechanism: function(name, handler) {
+      this.mechanisms[name] = handler;
     }
   };
 
@@ -158,29 +161,21 @@
       //Authentication
       //FIXME SASL mechanisms and XMPP features can be both in a stream:features
       if (stanza.name === 'stream:features') {
-        for (var i = 0, length = stanza.children.length; i < length; i++) {
-          //SASL mechanisms
-          if(stanza.children[i].name === 'mechanisms') {
+        var mechanisms = stanza.getChild('mechanisms', 'urn:ietf:params:xml:ns:xmpp-sasl');
+        if (!mechanisms)
+          return;
 
-            stanza.mechanisms = [];
-            var nodes = stanza.children[i].getChildren('mechanism');
-            for (var i = 0; i < nodes.length; i++)
-              stanza.mechanisms.push(nodes[i].text());
-            that.emit('mechanisms', stanza);
-            return;
-          }
+        //FIXME: ability to choose what mechanism to use
+        var nodes = mechanisms.getChildren('mechanism');
+        for (var i = 0; i < nodes.length; i++) {
+          var mechanism = nodes[i].text();
+          if (Lightstring.mechanisms[mechanism])
+            return Lightstring.mechanisms[mechanism](that);
         }
-        that.emit('features', stanza);
+        DEBUG('Server doesn\'t support any the SASL mechanisms');
+        this.close();
       }
-      else if (stanza.name === 'challenge') {
-        that.emit('challenge', stanza);
-      }
-      else if (stanza.name === 'failure') {
-        that.emit('error', stanza);
-      }
-      else if (stanza.name === 'success') {
-        that.emit('success', stanza);
-      }
+
 
       //Iq callbacks
       else if (stanza.name === 'iq') {
@@ -289,35 +284,5 @@
     this.transport.send(stream);
     this.emit('out', stream);
     this.transport.close();
-  };
-  Lightstring.Connection.prototype.load = function() {
-    for (var i = 0; i < arguments.length; i++) {
-      var name = arguments[i];
-      if (!(name in Lightstring.plugins))
-        continue; //TODO: error
-
-      var plugin = Lightstring.plugins[name];
-
-      //Namespaces
-      for (var ns in plugin.namespaces)
-        Lightstring.ns[ns] = plugin.namespaces[ns];
-
-      //Stanzas
-      Lightstring.stanzas[name] = {};
-      for (var stanza in plugin.stanzas)
-        Lightstring.stanzas[name][stanza] = plugin.stanzas[stanza];
-
-      //Handlers
-      for (var handler in plugin.handlers)
-        this.on(handler, plugin.handlers[handler]);
-
-      //Methods
-      this[name] = {};
-      for (var method in plugin.methods)
-        this[name][method] = plugin.methods[method].bind(this);
-
-      if (plugin.init)
-        plugin.init.apply(this);
-    }
   };
 })();
