@@ -42,7 +42,7 @@ function xmlToJson(xml) {
   return el;
 };
 
-window.parseTest = function(test) {
+window.parseTest = function(test) {
   var parser = new DOMParser();
   var doc = parser.parseFromString(test, "application/xml");
   return(xmlToJson(doc.firstChild));
