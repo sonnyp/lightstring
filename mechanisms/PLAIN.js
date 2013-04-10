@@ -69,17 +69,22 @@ Lightstring.addMechanism('PLAIN', function(conn) {
               '<session xmlns="urn:ietf:params:xml:ns:xmpp-session"/>' +
             '</iq>',
             function() {
-              conn.emit('connected');
-              conn.status = 'connected';
+              conn.onAuthSuccess();
               conn.removeListener('stanza', onStanza);
             }
           );
         },
         //Error
         function(stanza) {
+          conn.onAuthFailure();
+          conn.removeListener('stanza', onStanza);
           //TODO: Error?
         }
       );
+    }
+    else if (stanza.name === 'failure') {
+      conn.onAuthFailure();
+      conn.removeListener('stanza', onStanza);
     }
   })
 });

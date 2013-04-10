@@ -132,6 +132,13 @@
     Lightstring.connections.push(this);
   };
   Lightstring.Connection.prototype = EventEmitter.extend();
+  Lightstring.Connection.prototype.onAuthSuccess = function() {
+    this.emit('connected');
+    this.status = 'connected';
+  };
+  Lightstring.Connection.prototype.onAuthFailure = function() {
+    this.emit('failure');
+  };
   Lightstring.Connection.prototype.onTransportLoaded = function() {
 
     var that = this;
