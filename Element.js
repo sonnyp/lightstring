@@ -1,5 +1,3 @@
-'use strict';
-
 /**
   Copyright (c) 2011, Sonny Piers <sonny at fastmail dot net>
 
@@ -22,6 +20,7 @@ https://raw.github.com/astro/ltx/master/lib/element.js
 
 
 (function() {
+'use strict';
 
 /**
  * This cheap replica of DOM/Builder puts me to shame :-)
@@ -319,6 +318,6 @@ function escapeXmlText(s) {
         replace(/>/g, '&gt;');
 }
 
-window.Element = Element;
+Lightstring.Element = Element;
 
 })();

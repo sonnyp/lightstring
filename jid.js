@@ -1,5 +1,3 @@
-'use strict';
-
 /**
   Copyright (c) 2012, Emmanuel Gil Peyrot <linkmauve@linkmauve.fr>
 
@@ -19,6 +17,7 @@
 //https://tools.ietf.org/html/rfc6122
 
 (function() {
+'use strict';
 
 /**
  * @constructor Creates a new JID object.
