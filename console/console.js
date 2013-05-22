@@ -17,7 +17,7 @@
       var child = entriesEl.firstChild;
       if(child)
         entriesEl.insertBefore(entry, child);
-      else  
+      else
         entriesEl.appendChild(entry)
     },
     buildLogEntry: function(aLog) {
@@ -57,14 +57,14 @@
       Lightstring.connections[0].send(aData)
     },
     init: function() {
-      if (Lightstring.Connection) {
-        Lightstring.connections[0].on('stanza', function(stanza) {
-          Lightstring.console.log({dir: 'in', data: stanza.toString()});
-        });
-        Lightstring.connections[0].on('out', function(stanza) {
-          Lightstring.console.log({dir: 'out', data: stanza.toString()});
-        });
-      }
+      // if (Lightstring.Connection) {
+      //   Lightstring.connections[0].on('stanza', function(stanza) {
+      //     Lightstring.console.log({dir: 'in', data: stanza.toString()});
+      //   });
+      //   Lightstring.connections[0].on('out', function(stanza) {
+      //     Lightstring.console.log({dir: 'out', data: stanza.toString()});
+      //   });
+      // }
       if (document.readyState === 'complete')
         return this.initView();
 

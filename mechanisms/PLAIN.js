@@ -26,22 +26,27 @@ References:
     http://tools.ietf.org/html/rfc4616
 */
 
-Lightstring.addMechanism('PLAIN', function(conn) {
-  var token = btoa(
-    conn.jid.bare +
-    '\u0000' +
-    conn.jid.local +
-    '\u0000' +
-    conn.password
-  );
+Lightstring.addMechanism('PLAIN', {
+  conn: null,
+  done: false,
+  start: function(conn) {
+    this.conn = conn;
+    var token = btoa(
+      conn.jid.bare +
+      '\u0000' +
+      conn.jid.local +
+      '\u0000' +
+      conn.password
+    );
 
-  conn.send(
-    "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
-         " mechanism='PLAIN'>" + token + "</auth>"
-  );
-
-  var that = this;
-  conn.addListener('stanza', function onStanza(stanza) {
+    conn.send(
+      "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
+           " mechanism='PLAIN'>" + token + "</auth>"
+    );
+  },
+  onStanza: function(stanza) {
+    var conn = this.conn;
+    var that = this;
     if (stanza.name === 'success') {
       conn.send(
         "<stream:stream to='" + conn.jid.domain + "'" +
@@ -70,21 +75,20 @@ Lightstring.addMechanism('PLAIN', function(conn) {
             '</iq>',
             function() {
               conn.onAuthSuccess();
-              conn.removeListener('stanza', onStanza);
+              that.done = true;
             }
           );
         },
         //Error
         function(stanza) {
           conn.onAuthFailure();
-          conn.removeListener('stanza', onStanza);
-          //TODO: Error?
+          that.done = true;
         }
       );
     }
     else if (stanza.name === 'failure') {
       conn.onAuthFailure();
-      conn.removeListener('stanza', onStanza);
+      that.done = true;
     }
-  })
+  }
 });
