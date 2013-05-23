@@ -133,20 +133,13 @@ Lightstring.Connection = function(aService) {
   this.onClose = function(){};
   this.onFailure = function(){};
   this.onDisconnecting = function(){};
+  this.onAuthFailure = function(){};
   this.onStanza = function(){};
   this.onOut = function(){};
 
   Lightstring.connections.push(this);
 };
 Lightstring.Connection.prototype = {
-  onAuthSuccess: function() {
-    this.onConnected();
-    this.status = 'connected';
-  },
-  onAuthFailure: function() {
-    this.onFailure();
-    this.status = 'auth failed';
-  },
   /**
    * @function Create and open a websocket then go though the XMPP authentification process.
    * @param {String} [aJid] The JID (Jabber id) to use.
@@ -202,7 +195,7 @@ Lightstring.Connection.prototype = {
       that.onStanza(stanza);
 
       //Mechanism has already been choosen
-      if (that.mechanism && !that.mechanism.done) {
+      if (that.mechanism && that.status !== 'connected') {
         that.mechanism.onStanza(stanza);
       }
       //Authentication
@@ -217,6 +210,16 @@ Lightstring.Connection.prototype = {
           var mechanism = nodes[i].text();
           if (Lightstring.mechanisms[mechanism]) {
             that.mechanism = Lightstring.mechanisms[mechanism];
+            that.mechanism.onError = function() {
+              delete that.mechanism;
+              that.status = 'auth failed';
+              that.onAuthFailure();
+            };
+            that.mechanism.onSuccess = function() {
+              delete that.mechanism;
+              that.status = 'connected';
+              that.onConnected();
+            };
             that.mechanism.start(that);
             return;
           }

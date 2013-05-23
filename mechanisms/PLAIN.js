@@ -28,7 +28,8 @@ References:
 
 Lightstring.addMechanism('PLAIN', {
   conn: null,
-  done: false,
+  onSuccess: function() {},
+  onError: function() {},
   start: function(conn) {
     this.conn = conn;
     var token = btoa(
@@ -74,21 +75,18 @@ Lightstring.addMechanism('PLAIN', {
               '<session xmlns="urn:ietf:params:xml:ns:xmpp-session"/>' +
             '</iq>',
             function() {
-              conn.onAuthSuccess();
-              that.done = true;
+              that.onSuccess();
             }
           );
         },
         //Error
         function(stanza) {
-          conn.onAuthFailure();
-          that.done = true;
+          that.onError();
         }
       );
     }
     else if (stanza.name === 'failure') {
-      conn.onAuthFailure();
-      that.done = true;
+      that.onError();
     }
   }
 });
