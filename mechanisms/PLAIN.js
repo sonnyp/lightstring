@@ -1,5 +1,3 @@
-'use strict';
-
 /**
   Copyright (c) 2012, Sonny Piers <sonny at fastmail dot net>
 
@@ -26,7 +24,10 @@ References:
     http://tools.ietf.org/html/rfc4616
 */
 
-Lightstring.addMechanism('PLAIN', {
+(function(Lightstring) {
+'use strict';
+
+Lightstring.registerMechanism('PLAIN', {
   conn: null,
   onSuccess: function() {},
   onError: function() {},
@@ -41,8 +42,7 @@ Lightstring.addMechanism('PLAIN', {
     );
 
     conn.send(
-      "<auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'" +
-           " mechanism='PLAIN'>" + token + "</auth>"
+      '<auth xmlns="urn:ietf:params:xml:ns:xmpp-sasl" mechanism="PLAIN">' + token + '</auth>'
     );
   },
   onStanza: function(stanza) {
@@ -90,3 +90,4 @@ Lightstring.addMechanism('PLAIN', {
     }
   }
 });
+})(window.Lightstring);

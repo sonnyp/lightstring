@@ -17,7 +17,7 @@
 (function() {
 'use strict';
 
-window.Lightstring = {
+var Lightstring = {
   /*
    * @namespace Holds XMPP namespaces.
    * @description http://xmpp.org/xmpp-protocols/protocol-namespaces
@@ -62,6 +62,10 @@ window.Lightstring = {
    */
   mechanisms: {},
   /**
+   * @namespace Holds transport methods
+   */
+  transports: {},
+  /**
    * @private Holds the connections
    */
   connections: [],
@@ -98,10 +102,15 @@ window.Lightstring = {
       replace(/&quot;/g, '"').
       replace(/&apos;/g, "'"));
   },
-  addMechanism: function(name, handler) {
+  registerMechanism: function(name, handler) {
     this.mechanisms[name] = handler;
+  },
+  registerTransport: function(name, transport) {
+    this.transports[name] = transport;
   }
 };
+
+window.Lightstring = Lightstring;
 
 /**
  * @constructor Creates a new Lightstring connection
@@ -165,9 +174,9 @@ Lightstring.Connection.prototype = {
     var protocol = getProtocol(this.service);
 
     if (protocol.match('http'))
-      this.transport = new Lightstring.BOSHTransport(this.service, this.jid);
+      this.transport = new Lightstring.transports['BOSH'](this.service, this.jid);
     else if (protocol.match('ws'))
-      this.transport = new Lightstring.WebSocketTransport(this.service, this.jid);
+      this.transport = new Lightstring.transports['WebSocket'](this.service, this.jid);
 
     var that = this;
 
@@ -265,7 +274,7 @@ Lightstring.Connection.prototype = {
     else
       stanza = aStanza;
 
-    if (!stanza.attrs.from) {
+    if ((stanza.name === 'message' || stanza.name === 'presence' || stanza.name === 'iq') && !stanza.attrs.from) {
       stanza.attrs.from = this.jid.full;
     }
 
@@ -298,4 +307,4 @@ Lightstring.Connection.prototype = {
     this.transport.close();
   }
 };
-})();
+})(window);
