@@ -295,6 +295,8 @@ Lightstring.Connection.prototype = {
       ; //TODO: warning (no callback without iq)
 
     this.transport.send(stanza.toString());
+
+    return stanza;
   },
   /**
    * @function Closes the XMPP stream and the socket.
