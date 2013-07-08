@@ -1,0 +1,25 @@
+{
+  "name": "lightstring",
+  "description": "XMPP client library for Node.JS and browsers.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/sonnyp/lightstring",
+  "bugs": {
+    "url": "https://github.com/sonnyp/lightstring/issues",
+    "email": "sonny@fastmail.net"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "git://github.com/sonnyp/lightstring.git"
+  },
+  "dependencies": {
+    "grunt-cli": "~0.1.9",
+    "grunt": "~0.4.1",
+    "grunt-contrib-uglify": "~0.2.0",
+    "grunt-contrib-clean": "~0.4.0",
+    "grunt-contrib-concat": "~0.2.0"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "~0.4.3",
+    "grunt-jsvalidate": "~0.2.1"
+  }
+}
