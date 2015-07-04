@@ -1,3 +1,9 @@
+# DEPRECATED
+
+This is old stuff, you'd better take a look at [XMPP-FTW](https://github.com/xmpp-ftw/xmpp-ftw) or [Stanza.io](https://github.com/otalk/stanza.io)
+
+------
+
 Implemented transports
   BOSH
   WebSocket
