@@ -1,6 +1,6 @@
 # DEPRECATED
 
-This is old stuff, you'd better take a look at [XMPP-FTW](https://github.com/xmpp-ftw/xmpp-ftw) or [Stanza.io](https://github.com/otalk/stanza.io)
+This is old stuff, you'd better take a look at [Stanza.io](https://github.com/otalk/stanza.io) for pure client solution or [XMPP-FTW](https://github.com/xmpp-ftw/xmpp-ftw) for a server/client solution.
 
 ------
 
