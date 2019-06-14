@@ -1,6 +1,6 @@
 # DEPRECATED
 
-Recommended
+Please use https://github.com/xmppjs/xmpp.js/
 
 * [Stanza.io](https://github.com/otalk/stanza.io) pure client
 * [XMPP-FTW](https://github.com/xmpp-ftw/xmpp-ftw) client + server 'proxy'
